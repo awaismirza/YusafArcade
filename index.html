@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Yusaf Arcade</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #0f0f14;
+        touch-action: none;
+        overscroll-behavior: none;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      #game {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+      }
+      #touch {
+        display: none;
+        flex: 0 0 auto;
+        align-items: stretch;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        background: #111218;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      body.runner-touch #touch {
+        display: flex;
+      }
+      #flap-bar {
+        display: none;
+        flex: 0 0 auto;
+        justify-content: center;
+        gap: 12px;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        background: #111218;
+      }
+      body.flappy-touch #flap-bar {
+        display: flex;
+      }
+      #end-bar {
+        display: none;
+        flex: 0 0 auto;
+        justify-content: center;
+        gap: 14px;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        background: #111218;
+      }
+      body.gameover-touch #end-bar {
+        display: flex;
+      }
+      #btn-restart,
+      #btn-main-menu {
+        flex: 1;
+        max-width: 220px;
+        min-height: 64px;
+        border: 0;
+        border-radius: 16px;
+        color: #fff;
+        font: 700 20px/1 system-ui, sans-serif;
+      }
+      #btn-restart { background: #15803d; }
+      #btn-main-menu { background: #1d4ed8; }
+      #btn-flap {
+        flex: 1;
+        max-width: 420px;
+        min-height: 72px;
+        border: 0;
+        border-radius: 18px;
+        background: #eab308;
+        color: #0f172a;
+        font: 800 24px/1 system-ui, sans-serif;
+      }
+      .cluster {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+      }
+      #touch button {
+        appearance: none;
+        border: 0;
+        border-radius: 16px;
+        min-width: 92px;
+        min-height: 64px;
+        padding: 0 16px;
+        font: 700 18px/1 system-ui, sans-serif;
+        color: #f8fafc;
+        touch-action: none;
+      }
+      #btn-jump { background: #2563eb; }
+      #btn-duck { background: #6d28d9; }
+      #btn-sword { background: #b91c1c; }
+      #btn-shoot { background: #15803d; min-width: 128px; }
+      @media (min-width: 800px) {
+        #touch { padding: 14px 28px calc(14px + env(safe-area-inset-bottom)); gap: 20px; }
+        #touch button { min-width: 140px; min-height: 84px; font-size: 22px; border-radius: 20px; }
+        #btn-shoot { min-width: 180px; }
+      }
+      #rotate {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(15, 15, 20, 0.92);
+        color: #f8fafc;
+        font: 600 20px/1.4 system-ui, sans-serif;
+        text-align: center;
+      }
+      @media (orientation: portrait) and (max-width: 700px) {
+        body.runner-touch #rotate { display: flex; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game"></div>
+    <div id="touch" aria-label="Touch controls">
+      <div class="cluster">
+        <button id="btn-jump" type="button">Jump</button>
+        <button id="btn-duck" type="button">Duck</button>
+      </div>
+      <div class="cluster">
+        <button id="btn-sword" type="button">Sword</button>
+        <button id="btn-shoot" type="button">Shoot</button>
+      </div>
+    </div>
+    <div id="flap-bar" aria-label="Flappy controls">
+      <button id="btn-flap" type="button">Flap</button>
+    </div>
+    <div id="end-bar" aria-label="Game over">
+      <button id="btn-restart" type="button">Restart</button>
+      <button id="btn-main-menu" type="button">Main Menu</button>
+    </div>
+    <div id="rotate">Turn the phone sideways for Batman Shooting Game.</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
