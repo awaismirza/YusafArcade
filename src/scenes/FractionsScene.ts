@@ -9,6 +9,7 @@ export class FractionsScene extends ChoiceGameScene {
     title: "Fraction Pizza 🍕",
     subtitle: "Slices, fractions and comparing!",
     bg: 0x7f1d1d,
+    palette: "fractions",
     end: "Fraction Hero!",
     best: "fractions",
   };

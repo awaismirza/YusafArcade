@@ -4,6 +4,13 @@ import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
 import { addMenuButton, Btn, FONT, getBest, makeButton, pollEndTaps, resetTaps, saveBest, showGameOver, showLevelPicker } from "../ui/arcadeKit";
 import { ChoiceBoard } from "../ui/choiceBoard";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { confetti, popText } from "../ui/fx";
+import { drawGlass } from "../ui/glass";
+import { PALETTES } from "../ui/palettes";
+import { addProgress } from "../ui/progress";
+import { shade } from "../ui/theme";
 
 export type Round = {
   prompt: string;
@@ -21,6 +28,8 @@ export type GameCfg = {
   title: string;
   subtitle: string;
   bg: number;
+  /** Key into PALETTES for the gradient background and accent. */
+  palette?: string;
   end: string;
   best: string;
 };
@@ -42,8 +51,10 @@ export abstract class ChoiceGameScene extends Phaser.Scene {
   private board: ChoiceBoard | null = null;
   private shown: Phaser.GameObjects.GameObject[] = [];
   private nextBtn: Btn | null = null;
-  private title!: Phaser.GameObjects.Text;
-  private scoreText!: Phaser.GameObjects.Text;
+  private titleChip!: Chip;
+  private scoreChip!: Chip;
+  private progress!: { set(f: number): void; destroy(): void };
+  private msgCard!: Phaser.GameObjects.Graphics;
   private prompt!: Phaser.GameObjects.Text;
   private msg!: Phaser.GameObjects.Text;
   private hideMenu!: () => void;
@@ -68,16 +79,22 @@ export abstract class ChoiceGameScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(this.cfg.bg);
+    const pal = PALETTES[this.cfg.palette ?? ""];
+    if (pal) setGradientBackground(this, pal);
+    else this.cameras.main.setBackgroundColor(this.cfg.bg);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.title = this.add.text(GAME_WIDTH / 2, 30, "", { fontFamily: FONT, fontSize: "24px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
-    this.scoreText = this.add.text(GAME_WIDTH - 20, 24, "Score 0", { fontFamily: FONT, fontSize: "20px", color: "#fde047", fontStyle: "700" }).setOrigin(1, 0.5);
-    this.add.text(GAME_WIDTH - 20, 50, `🏆 Best ${getBest(this.cfg.best)}`, { fontFamily: FONT, fontSize: "15px", color: "#fde68a" }).setOrigin(1, 0.5);
-    this.prompt = this.add.text(GAME_WIDTH / 2, 82, "", { fontFamily: FONT, fontSize: "24px", color: "#e2e8f0", fontStyle: "700", align: "center", wordWrap: { width: 800 } }).setOrigin(0.5);
+    this.titleChip = addChip(this, GAME_WIDTH / 2, 34, { width: 210 });
+    this.scoreChip = addChip(this, GAME_WIDTH - 92, 34, { icon: "⭐", width: 120 });
+    this.scoreChip.setText("0");
+    addChip(this, GAME_WIDTH - 92, 82, { icon: "🏆", width: 120 }).setText(String(getBest(this.cfg.best)));
+    this.progress = addProgress(this, GAME_WIDTH / 2, 72, 420, pal?.accent ?? 0x34d399);
+    this.prompt = this.add.text(GAME_WIDTH / 2, 112, "", { fontFamily: FONT, fontSize: "26px", color: "#ffffff", fontStyle: "800", align: "center", wordWrap: { width: 800 } }).setOrigin(0.5);
+    this.msgCard = this.add.graphics().setDepth(5);
     this.msg = this.add
-      .text(GAME_WIDTH / 2, 432, "", { fontFamily: FONT, fontSize: "21px", color: "#fde047", align: "center", wordWrap: { width: 860 } })
-      .setOrigin(0.5);
+      .text(GAME_WIDTH / 2, 436, "", { fontFamily: FONT, fontSize: "21px", color: "#fde68a", fontStyle: "700", align: "center", wordWrap: { width: 840 } })
+      .setOrigin(0.5)
+      .setDepth(6);
 
     this.hideMenu = addMenuButton(this, () => {
       if (!this.dead) this.scene.start("Menu");
@@ -97,7 +114,14 @@ export abstract class ChoiceGameScene extends Phaser.Scene {
     this.board?.clear();
     this.nextBtn?.container.destroy();
     this.nextBtn = null;
-    this.msg.setText("");
+    this.setMessage("");
+  }
+
+  /** Shows (or clears) the explanation on a soft glass card. */
+  private setMessage(text: string): void {
+    this.msg.setText(text);
+    this.msgCard.clear();
+    if (text) drawGlass(this.msgCard, GAME_WIDTH / 2, 436, Math.min(880, this.msg.width + 48), this.msg.height + 18, { tint: 0x1b1640, alpha: 0.5, radius: 22 });
   }
 
   private nextRound(): void {
@@ -107,14 +131,17 @@ export abstract class ChoiceGameScene extends Phaser.Scene {
       return;
     }
     this.round += 1;
-    this.title.setText(`Question ${this.round} of ${ROUNDS}`);
-    this.scoreText.setText(`Score ${this.score}`);
+    this.titleChip.setText(`Question ${this.round} of ${ROUNDS}`);
+    this.progress.set((this.round - 1) / ROUNDS);
+    this.scoreChip.setText(String(this.score));
 
     const r = this.makeRound(this.tier);
     this.prompt.setText(r.prompt);
     if (r.visual) this.shown.push(...r.visual());
 
     this.board = new ChoiceBoard(this, GAME_WIDTH / 2, 262, r.cols ?? 2, r.w ?? 380, 76);
+    const pal = PALETTES[this.cfg.palette ?? ""];
+    if (pal) this.board.base = shade(pal.top, 0.12);
     this.board.show(
       r.options,
       r.correct,
@@ -122,15 +149,19 @@ export abstract class ChoiceGameScene extends Phaser.Scene {
         if (ok) {
           this.correct += 1;
           this.streak += 1;
-          this.score += 10 + Math.min(this.streak - 1, 5) * 2;
+          const gain = 10 + Math.min(this.streak - 1, 5) * 2;
+          this.score += gain;
           gameAudio.coin();
-          this.msg.setText(`Correct! ${r.explain}`);
+          this.setMessage(`Correct! ${r.explain}`);
+          popText(this, GAME_WIDTH / 2, 200, `+${gain}`);
+          if (this.streak === 3 || this.streak === 5 || this.streak === 8) confetti(this, GAME_WIDTH / 2, 150);
         } else {
           this.streak = 0;
           gameAudio.hit();
-          this.msg.setText(`Not quite. ${r.explain}`);
+          this.setMessage(`Not quite. ${r.explain}`);
         }
-        this.scoreText.setText(`Score ${this.score}`);
+        this.scoreChip.setText(String(this.score));
+        this.progress.set(this.round / ROUNDS);
         this.nextBtn = makeButton(this, GAME_WIDTH / 2, 494, 240, 52, this.round >= ROUNDS ? "Finish ▶" : "Next ▶", 0x16a34a, () => this.nextRound(), 24);
       },
       r.fontSize ?? 30

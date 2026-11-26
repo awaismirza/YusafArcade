@@ -10,6 +10,7 @@ export class ClockScene extends ChoiceGameScene {
     title: "Clock Reader ⏰",
     subtitle: "Read the clock and pick the right time!",
     bg: 0x0c4a6e,
+    palette: "clock",
     end: "Time Master!",
     best: "clock",
   };

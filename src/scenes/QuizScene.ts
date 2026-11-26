@@ -1,12 +1,6 @@
-import Phaser from "phaser";
-import { GAME_WIDTH } from "../config";
-import { gameAudio } from "../audio/sfx";
-import { setTouchChrome } from "../input/touchChrome";
-import { addMenuButton, Btn, FONT, makeButton, pollEndTaps, resetTaps, showGameOver, showLevelPicker } from "../ui/arcadeKit";
-import { ChoiceBoard } from "../ui/choiceBoard";
 import { EASY_MORE, QA } from "../data/quizEasyBank";
-
-const ROUNDS = 10;
+import { FONT } from "../ui/theme";
+import { ChoiceGameScene, GameCfg, Round, shuffle, withAnswer } from "./ChoiceGameScene";
 
 const EASY_BASE: QA[] = [
   ["🪐", "Which planet do we live on?", "Earth", ["Mars", "Venus", "Jupiter"], "Earth is the third planet from the Sun."],
@@ -47,119 +41,42 @@ const HARD: QA[] = [
   ["🌋", "Which layer of the Earth do we live on?", "Crust", ["Mantle", "Outer core", "Inner core"], "The crust is the thin, rocky outer skin of our planet."],
 ];
 
-export class QuizScene extends Phaser.Scene {
-  private questions: QA[] = [];
-  private round = 0;
-  private correct = 0;
-  private streak = 0;
-  private score = 0;
-  private dead = false;
-  private lockUntil = 0;
-  private board: ChoiceBoard | null = null;
-  private nextBtn: Btn | null = null;
-  private cat!: Phaser.GameObjects.Text;
-  private qText!: Phaser.GameObjects.Text;
-  private title!: Phaser.GameObjects.Text;
-  private scoreText!: Phaser.GameObjects.Text;
-  private fact!: Phaser.GameObjects.Text;
-  private hideMenu!: () => void;
+export class QuizScene extends ChoiceGameScene {
+  protected readonly cfg: GameCfg = {
+    title: "Brain Quiz 🧠",
+    subtitle: "Science, space, nature and the world.\nLearn a fun fact after every answer!",
+    bg: 0x064e3b,
+    palette: "quiz",
+    end: "Quiz Champion!",
+    best: "quiz",
+  };
+
+  /** The shuffled questions for this session, so none repeats. */
+  private order: QA[] = [];
+  private next = 0;
 
   constructor() {
-    super({ key: "Quiz" });
+    super("Quiz");
   }
 
   init(): void {
-    this.questions = [];
-    this.round = 0;
-    this.correct = 0;
-    this.streak = 0;
-    this.score = 0;
-    this.dead = false;
-    this.lockUntil = 0;
-    this.board = null;
-    this.nextBtn = null;
-    resetTaps();
+    super.init();
+    this.order = [];
+    this.next = 0;
   }
 
-  create(): void {
-    setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x064e3b);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
-
-    this.title = this.add.text(GAME_WIDTH / 2, 36, "", { fontFamily: FONT, fontSize: "26px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
-    this.scoreText = this.add.text(GAME_WIDTH - 20, 36, "Score 0", { fontFamily: FONT, fontSize: "22px", color: "#fde047", fontStyle: "700" }).setOrigin(1, 0.5);
-    this.cat = this.add.text(GAME_WIDTH / 2, 100, "", { fontFamily: FONT, fontSize: "46px" }).setOrigin(0.5);
-    this.qText = this.add
-      .text(GAME_WIDTH / 2, 170, "", { fontFamily: FONT, fontSize: "30px", color: "#ffffff", fontStyle: "700", align: "center", wordWrap: { width: 820 } })
-      .setOrigin(0.5);
-    this.fact = this.add
-      .text(GAME_WIDTH / 2, 436, "", { fontFamily: FONT, fontSize: "20px", color: "#fde047", align: "center", wordWrap: { width: 860 } })
-      .setOrigin(0.5);
-
-    this.hideMenu = addMenuButton(this, () => {
-      if (!this.dead) this.scene.start("Menu");
-    });
-
-    showLevelPicker(this, "Brain Quiz 🧠", "Science, space, nature and the world.\nLearn a fun fact after every answer!", (tier) => {
-      const bank = tier === 0 ? EASY : HARD;
-      this.questions = Phaser.Utils.Array.Shuffle([...bank]).slice(0, ROUNDS);
-      gameAudio.unlock();
-      gameAudio.startMusic();
-      this.nextRound();
-    });
-  }
-
-  private nextRound(): void {
-    this.board?.clear();
-    this.nextBtn?.container.destroy();
-    this.nextBtn = null;
-    this.fact.setText("");
-
-    if (this.round >= this.questions.length) {
-      this.finish();
-      return;
-    }
-    const [emoji, question, right, wrong, fact] = this.questions[this.round];
-    this.round += 1;
-    this.title.setText(`Question ${this.round} of ${this.questions.length}`);
-    this.cat.setText(emoji);
-    this.qText.setText(question);
-
-    const all = Phaser.Utils.Array.Shuffle([right, ...wrong]);
-    this.board = new ChoiceBoard(this, GAME_WIDTH / 2, 262, 2, 400, 70);
-    this.board.show(
-      all,
-      all.indexOf(right),
-      (ok) => {
-        if (ok) {
-          this.correct += 1;
-          this.streak += 1;
-          this.score += 10 + Math.min(this.streak - 1, 5) * 2;
-          gameAudio.coin();
-        } else {
-          this.streak = 0;
-          gameAudio.hit();
-        }
-        this.scoreText.setText(`Score ${this.score}`);
-        this.fact.setText(`${ok ? "Correct! " : `The answer is ${right}. `}💡 ${fact}`);
-        this.nextBtn = makeButton(this, GAME_WIDTH / 2, 494, 240, 50, this.round >= this.questions.length ? "Finish ▶" : "Next ▶", 0x16a34a, () => this.nextRound(), 24);
-      },
-      24
-    );
-  }
-
-  private finish(): void {
-    this.dead = true;
-    gameAudio.stopMusic();
-    this.lockUntil = this.time.now + 500;
-    this.hideMenu();
-    showGameOver(this, `${this.correct}/${this.questions.length} correct · Score ${this.score}`, () => this.scene.restart(), () => this.scene.start("Menu"), "Quiz Champion!");
-  }
-
-  update(time: number): void {
-    if (!this.dead || time < this.lockUntil) return;
-    const tap = pollEndTaps();
-    if (tap === "restart") this.scene.restart();
-    else if (tap === "menu") this.scene.start("Menu");
+  protected makeRound(tier: 0 | 1): Round {
+    if (this.order.length === 0) this.order = shuffle(tier === 0 ? EASY : HARD);
+    const [emoji, question, right, wrong, fact] = this.order[this.next++ % this.order.length];
+    const { options, correct } = withAnswer(right, wrong);
+    return {
+      prompt: question,
+      visual: () => [this.add.text(480, 178, emoji, { fontFamily: FONT, fontSize: "44px" }).setOrigin(0.5)],
+      options,
+      correct,
+      explain: `💡 ${fact}`,
+      w: 400,
+      fontSize: 24,
+    };
   }
 }

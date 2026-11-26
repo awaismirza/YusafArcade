@@ -45,6 +45,7 @@ export class OddScene extends ChoiceGameScene {
     title: "Odd One Out 🧐",
     subtitle: "Find the one that does not belong!",
     bg: 0x831843,
+    palette: "odd",
     end: "Sharp Thinker!",
     best: "odd",
   };

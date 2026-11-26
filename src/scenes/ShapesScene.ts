@@ -45,6 +45,7 @@ export class ShapesScene extends ChoiceGameScene {
     title: "Shape Detective 🔷",
     subtitle: "Name the shapes and count their sides!",
     bg: 0x134e4a,
+    palette: "shapes",
     end: "Shape Expert!",
     best: "shapes",
   };

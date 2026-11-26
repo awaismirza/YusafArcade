@@ -49,6 +49,7 @@ export class WorldScene extends ChoiceGameScene {
     title: "World Explorer 🌍",
     subtitle: "Flags, countries and capital cities!",
     bg: 0x1e3a8a,
+    palette: "world",
     end: "World Explorer!",
     best: "world",
   };

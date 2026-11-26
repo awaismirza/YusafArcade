@@ -34,6 +34,7 @@ export class OperatorScene extends ChoiceGameScene {
     title: "Missing Sign ➕",
     subtitle: "Which sign makes the equation true?\n+  −  ×  ÷",
     bg: 0x3b0764,
+    palette: "operator",
     end: "Sign Master!",
     best: "operator",
   };

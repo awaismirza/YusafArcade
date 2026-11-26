@@ -5,6 +5,8 @@ import { Btn, makeButton } from "./arcadeKit";
 export class ChoiceBoard {
   private btns: Btn[] = [];
   private locked = false;
+  /** Colour of an answer button before it is chosen. */
+  base = 0x334155;
 
   constructor(
     private scene: Phaser.Scene,
@@ -30,7 +32,7 @@ export class ChoiceBoard {
         this.w,
         this.h,
         label,
-        0x334155,
+        this.base,
         () => {
           if (this.locked) return;
           this.locked = true;
