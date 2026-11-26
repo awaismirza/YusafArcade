@@ -130,6 +130,42 @@ export function showLevelPicker(
   items.push(b1.container, b2.container);
 }
 
+export type ModeOption = { label: string; sub: string; color: number; mode: string };
+
+/**
+ * Full-screen mode picker with up to three choices (e.g. Easy, Challenge, 2 players on one iPad).
+ * Tap-only: every button is a big target, no hover needed.
+ */
+export function showModePicker(
+  scene: Phaser.Scene,
+  title: string,
+  subtitle: string,
+  options: ModeOption[],
+  onPick: (mode: string) => void
+): void {
+  const items: Phaser.GameObjects.GameObject[] = [];
+  items.push(scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0f172a, 0.94).setDepth(55).setInteractive());
+  items.push(
+    scene.add.text(GAME_WIDTH / 2, 110, title, { fontFamily: FONT, fontSize: "42px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5).setDepth(56)
+  );
+  items.push(
+    scene.add
+      .text(GAME_WIDTH / 2, 166, subtitle, { fontFamily: FONT, fontSize: "19px", color: "#cbd5e1", align: "center", lineSpacing: 4 })
+      .setOrigin(0.5)
+      .setDepth(56)
+  );
+  const width = options.length === 2 ? 360 : 270;
+  const gap = options.length === 2 ? 420 : 300;
+  options.forEach((opt, i) => {
+    const x = GAME_WIDTH / 2 + (i - (options.length - 1) / 2) * gap;
+    const btn = makeButton(scene, x, 330, width, 140, `${opt.label}\n${opt.sub}`, opt.color, () => {
+      items.forEach((o) => o.destroy());
+      onPick(opt.mode);
+    }, 26, 56);
+    items.push(btn.container);
+  });
+}
+
 /** Hold-to-move pads in the bottom corners. dir() returns -1, 0 or 1. */
 export function addMovePads(scene: Phaser.Scene): { dir: () => number } {
   let left = false;

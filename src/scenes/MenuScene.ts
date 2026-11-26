@@ -41,13 +41,14 @@ const PUZZLES: Entry[] = [
 
 const BOARD: Entry[] = [
   ["Checkers ⚫", "Jump to capture · crown a king", 0x3f6212, "Checkers"],
+  ["Chess ♟️", "3D board · checkmate the king", 0x78350f, "Chess"],
 ];
 
 const TABS: { name: string; note: string; games: Entry[] }[] = [
   { name: "🎮 Arcade", note: "", games: ARCADE },
   { name: "🧠 Learn", note: "Learning games for ages 7–10 · pick Easy or Challenge", games: LEARN },
   { name: "🧩 Puzzles", note: "Brain puzzles for ages 7–10 · pick Easy or Challenge", games: PUZZLES },
-  { name: "🎲 Board Games", note: "Classic board games · play against the computer", games: BOARD },
+  { name: "🎲 Board Games", note: "Classic board games · vs the computer or 2 players on one iPad", games: BOARD },
 ];
 
 let lastTab = 0;

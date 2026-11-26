@@ -1,0 +1,114 @@
+# Yusaf Arcade: Specification
+
+This is the source of truth for what every game in the arcade must do. [`AGENTS.md`](../AGENTS.md) holds the short rules for agents. This document holds the detail.
+
+## 1. Purpose
+
+A collection of learning games and classic board games for a child (ages 7–10). Each game is played in a browser, mostly on an **iPad**, usually in landscape. Games are for **one child, or two people sharing one screen**. There is no internet play.
+
+## 2. Platform requirements
+
+### 2.1 Target devices
+
+| Device | Browser | Priority |
+| --- | --- | --- |
+| iPad (iPadOS 16+) | Safari | **Required** |
+| iPad (iPadOS 16+) | Chrome (WebKit engine) | **Required** |
+| Desktop Chrome, Edge, Firefox | Latest | Supported (for development) |
+| Phones | Any | Best effort; landscape only |
+
+Safari on iPadOS uses WebKit for every browser, so test with WebKit or with the iPad device emulation in Chromium.
+
+### 2.2 Input
+
+- **Pointer events only** for game input. Tap and drag must work everywhere. Do not depend on hover, right-click, long-press or double-tap.
+- Keyboard shortcuts are optional extras. Every game must be fully playable by touch.
+- Touch targets are at least **44 × 44 CSS px** on screen.
+- Pinch zoom and page scroll are disabled by the page shell (`index.html`, `touch-action: none`). Scrollable panels opt in with `data-scroll`.
+
+### 2.3 Display
+
+- Game canvas: **960 × 540** logical pixels (16:9), scaled with `Phaser.Scale.FIT` and centred.
+- Landscape is the intended orientation. In portrait, show the "turn your iPad sideways" hint.
+- Text is at least 16 px at logical size and high-contrast on its background.
+
+### 2.4 Audio
+
+- Audio is unlocked by the first user gesture (`gameAudio.unlock()` on the first tap).
+- No autoplay. Music is optional and can be stopped at any time.
+
+### 2.5 Storage and safety
+
+- Game state is in memory. Best scores may use `localStorage`, but only through `getBest`/`saveBest` in `src/ui/arcadeKit.ts`, which swallow storage errors.
+- No `alert`, `confirm`, `prompt`, file pickers, popups or new windows.
+- No network requests are needed to play. Sprites and models ship in the build.
+
+### 2.6 3D and WebGL
+
+- Three.js is used for 3D games (for example, the chess board).
+- Renderer: `pixelRatio` at most 2, antialiasing on, shadow maps at 1024 or below, no heavy post-processing.
+- If WebGL is unavailable, the game shows a clear message and offers the 2D fallback or the menu, never a blank screen.
+
+### 2.7 Browser compatibility checklist
+
+Before a game is done, confirm:
+
+- [ ] Every action works with a single tap.
+- [ ] Nothing important is shown only on hover.
+- [ ] Touch targets are at least 44 px on screen.
+- [ ] Sound starts only after a tap.
+- [ ] The "Menu" button is reachable at all times (except during the picker).
+- [ ] Works at an iPad viewport (1180 × 820 CSS px, landscape) and at 16:9 scaling.
+- [ ] Works with the page in portrait, showing the rotate hint.
+- [ ] No console errors in a headless run.
+
+## 3. Modes and multiplayer
+
+Every game that involves turns must offer a **mode picker** on entry, with at least:
+
+1. **Easy** (computer opponent, gentle play)
+2. **Challenge** (computer opponent, stronger play)
+3. **2 players (same iPad)** (pass-and-play)
+
+Rules for local multiplayer:
+
+- Both players use the same controls on the same device. There is no networking.
+- The screen always says whose turn it is, in words ("Black's turn: pass the iPad").
+- Where it helps, the board turns to face the player to move.
+- Both players see the same information. Nothing is hidden behind hover.
+- The computer opponent and two-player mode use the same rules code.
+
+## 4. Game rules code
+
+- Pure logic (rules, move generation, AI) lives in its own module with no Phaser or DOM imports, so it can be unit-tested in Node (`src/games/chess/`, tests in `tests/`).
+- Rendering lives in the scene file.
+- The rules module is the only place that decides whether a move is legal.
+
+## 5. Games
+
+| Game | Category | Status | Notes |
+| --- | --- | --- | --- |
+| Checkers | Board Games | Live. Computer and two-player. | Standard 8×8 draughts with compulsory jumps, multi-jumps and kings. |
+| Chess | Board Games | Live. Computer and two-player. | 3D board with Three.js. Full rules: castling, en passant, promotion (auto-queen in play), check, checkmate, stalemate, 50-move and repetition draws. Rules are tested with standard perft counts (`npm run test:chess`). |
+| Other arcade, learn and puzzle games | Arcade / Learn / Puzzles | Live | Brought to this spec as they are changed. |
+
+## 6. Build and deployment
+
+- `npm run build` must pass. It runs `tsc -b` and then `vite build`.
+- The Vite base path is `/YusafArcade/` (GitHub Pages project site).
+- Deployment is built and pushed from the development environment. The deploy target is the `gh-pages` branch. GitHub Actions is not used for the build.
+- Mobile Safari caches aggressively. After a deploy, a hard refresh may be needed on the iPad.
+
+## 7. Known limits
+
+- Chess promotes pawns to Queens in play. The rules module supports all four promotion pieces, but the UI does not offer a choice yet.
+- Chess 3D pieces are built from simple turned and extruded shapes, so the knights look blocky from some angles.
+- Nothing has been run on a physical iPad. Checks so far use a headless browser (Chromium, with a WebGL software renderer). Confirm on a real iPad before calling a game finished.
+
+## 8. Definition of done for a new game
+
+1. Meets sections 2 and 3.
+2. Rules live in a tested module (Node test or a documented manual test).
+3. Passes `npm run build` with no type errors.
+4. Plays through headless with no console errors.
+5. Has been checked at an iPad viewport, and anything not verified on a real iPad is listed in the hand-off note.

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
-import { addMenuButton, FONT, pollEndTaps, resetTaps, showGameOver, showLevelPicker } from "../ui/arcadeKit";
+import { addMenuButton, FONT, pollEndTaps, resetTaps, showGameOver, showModePicker } from "../ui/arcadeKit";
 
 type Side = "w" | "b";
 type Piece = { c: Side; k: boolean };
@@ -9,6 +9,8 @@ type Board = (Piece | null)[][];
 type Sq = [number, number];
 /** One complete turn: a simple step (path of 1, no caps) or a jump chain. */
 type Move = { from: Sq; path: Sq[]; caps: Sq[] };
+/** "easy" and "hard" play against the computer; "two" is pass-and-play on one iPad. */
+type Mode = "easy" | "hard" | "two";
 
 const N = 8;
 const CS = 56;
@@ -18,8 +20,8 @@ const LIGHT = 0xf1d9a8;
 const DARK = 0x8a5a2c;
 const WOOD_FRAME = 0x6b4423;
 const WOOD_INNER = 0x3b2412;
-const HUMAN: Side = "w";
-const AI: Side = "b";
+const WHITE: Side = "w";
+const BLACK: Side = "b";
 /** Moves without a capture or a crown before the game is a draw (60 plies). */
 const QUIET_LIMIT = 60;
 const STEP_MS = 190;
@@ -27,9 +29,8 @@ const STEP_MS = 190;
 const inside = (r: number, c: number): boolean => r >= 0 && r < N && c >= 0 && c < N;
 const cloneBoard = (b: Board): Board => b.map((row) => row.map((p) => (p ? { ...p } : null)));
 const promoRow = (side: Side): number => (side === "w" ? 0 : N - 1);
-const cx = (c: number): number => LEFT + c * CS + CS / 2;
-const cy = (r: number): number => TOP + r * CS + CS / 2;
 const keyOf = (sq: Sq): string => `${sq[0]},${sq[1]}`;
+const sideName = (s: Side): string => (s === "w" ? "White" : "Black");
 
 function dirsFor(p: Piece): [number, number][] {
   if (p.k) return [[-1, -1], [-1, 1], [1, -1], [1, 1]];
@@ -76,7 +77,7 @@ function collectJumps(b: Board, r: number, c: number, piece: Piece, side: Side, 
 }
 
 /** All legal moves. If any jump exists, jumping is compulsory. */
-function legalMoves(board: Board, side: Side): Move[] {
+export function legalMoves(board: Board, side: Side): Move[] {
   const jumps: Move[] = [];
   const steps: Move[] = [];
   for (let r = 0; r < N; r++) {
@@ -97,7 +98,7 @@ function legalMoves(board: Board, side: Side): Move[] {
   return jumps.length > 0 ? jumps : steps;
 }
 
-function applyMove(board: Board, m: Move): Board {
+export function applyMove(board: Board, m: Move): Board {
   const nb = cloneBoard(board);
   const [fr, fc] = m.from;
   const piece = nb[fr][fc]!;
@@ -108,8 +109,8 @@ function applyMove(board: Board, m: Move): Board {
   return nb;
 }
 
-/** Score from the computer's side: material, a crown bonus, and a small push forward. */
-function evaluateForAI(board: Board): number {
+/** Score from the computer's side (black): material, a crown bonus, and a small push forward. */
+function evaluateForBlack(board: Board): number {
   let score = 0;
   for (let r = 0; r < N; r++) {
     for (let c = 0; c < N; c++) {
@@ -117,21 +118,21 @@ function evaluateForAI(board: Board): number {
       if (!p) continue;
       const progress = p.c === "b" ? r : N - 1 - r;
       const value = (p.k ? 2.5 : 1) + progress * 0.05;
-      score += p.c === AI ? value : -value;
+      score += p.c === BLACK ? value : -value;
     }
   }
   return score;
 }
 
 /** Minimax with alpha-beta pruning. A side with no legal moves has lost. */
-function search(board: Board, side: Side, depth: number, alpha: number, beta: number): number {
+export function search(board: Board, side: Side, depth: number, alpha: number, beta: number): number {
   const moves = legalMoves(board, side);
-  if (moves.length === 0) return side === AI ? -1000 : 1000;
-  if (depth === 0) return evaluateForAI(board);
-  if (side === AI) {
+  if (moves.length === 0) return side === BLACK ? -1000 : 1000;
+  if (depth === 0) return evaluateForBlack(board);
+  if (side === BLACK) {
     let best = -Infinity;
     for (const m of moves) {
-      best = Math.max(best, search(applyMove(board, m), HUMAN, depth - 1, alpha, beta));
+      best = Math.max(best, search(applyMove(board, m), WHITE, depth - 1, alpha, beta));
       alpha = Math.max(alpha, best);
       if (beta <= alpha) break;
     }
@@ -139,7 +140,7 @@ function search(board: Board, side: Side, depth: number, alpha: number, beta: nu
   }
   let best = Infinity;
   for (const m of moves) {
-    best = Math.min(best, search(applyMove(board, m), AI, depth - 1, alpha, beta));
+    best = Math.min(best, search(applyMove(board, m), BLACK, depth - 1, alpha, beta));
     beta = Math.min(beta, best);
     if (beta <= alpha) break;
   }
@@ -148,18 +149,20 @@ function search(board: Board, side: Side, depth: number, alpha: number, beta: nu
 
 export class CheckersScene extends Phaser.Scene {
   private board: Board = [];
-  private turn: Side = HUMAN;
+  private mode: Mode = "easy";
+  private turn: Side = WHITE;
+  /** True when the board is turned to face black (pass-and-play only). */
+  private flipped = false;
   private legal: Move[] = [];
   private sel: Sq | null = null;
   private lastMove: Move | null = null;
   private justCrowned: string | null = null;
-  private tier: 0 | 1 = 0;
   private quiet = 0;
   private busy = false;
   private animating = false;
   private dead = false;
   private lockUntil = 0;
-  private myCaptures = 0;
+  private captures: Record<Side, number> = { w: 0, b: 0 };
   private pieces = new Map<string, Phaser.GameObjects.Container>();
   private overlays: Phaser.GameObjects.GameObject[] = [];
   private hover!: Phaser.GameObjects.Rectangle;
@@ -174,7 +177,9 @@ export class CheckersScene extends Phaser.Scene {
 
   init(): void {
     this.board = [];
-    this.turn = HUMAN;
+    this.mode = "easy";
+    this.turn = WHITE;
+    this.flipped = false;
     this.legal = [];
     this.sel = null;
     this.lastMove = null;
@@ -184,7 +189,7 @@ export class CheckersScene extends Phaser.Scene {
     this.animating = false;
     this.dead = false;
     this.lockUntil = 0;
-    this.myCaptures = 0;
+    this.captures = { w: 0, b: 0 };
     this.pieces = new Map();
     this.overlays = [];
     resetTaps();
@@ -210,41 +215,60 @@ export class CheckersScene extends Phaser.Scene {
 
     this.buildBoard();
 
-    showLevelPicker(
+    showModePicker(
       this,
       "Checkers ⚫",
-      "Move diagonally · jump over a piece to capture it\nReach the far side to crown a King 👑\nEasy: the computer plays gently · Challenge: it thinks ahead",
-      (tier) => {
-        this.tier = tier;
+      "Move diagonally · jump over a piece to capture it\nReach the far side to crown a King 👑",
+      [
+        { label: "🌱 Easy", sub: "vs computer", color: 0x16a34a, mode: "easy" },
+        { label: "🚀 Challenge", sub: "vs computer", color: 0x7c3aed, mode: "hard" },
+        { label: "👫 2 Players", sub: "same iPad", color: 0x0369a1, mode: "two" },
+      ],
+      (mode) => {
+        this.mode = mode as Mode;
         gameAudio.unlock();
         gameAudio.startMusic();
         this.board = startBoard();
+        this.turn = WHITE;
+        this.legal = legalMoves(this.board, WHITE);
         this.refresh();
       }
     );
+  }
+
+  /** Screen position of a logical board square (accounts for the board being turned). */
+  private px(c: number): number {
+    return LEFT + (this.flipped ? N - 1 - c : c) * CS + CS / 2;
+  }
+  private py(r: number): number {
+    return TOP + (this.flipped ? N - 1 - r : r) * CS + CS / 2;
   }
 
   /** Wooden frame, shadow and the 64 squares. Dark squares are clickable. */
   private buildBoard(): void {
     const size = N * CS;
     const g = this.add.graphics().setDepth(1);
-    // drop shadow, outer frame, inner recess
     g.fillStyle(0x000000, 0.4).fillRoundedRect(LEFT - 14, TOP - 10, size + 36, size + 36, 18);
     g.fillStyle(WOOD_FRAME, 1).fillRoundedRect(LEFT - 18, TOP - 18, size + 36, size + 36, 18);
     g.fillStyle(0x8f6234, 1).fillRoundedRect(LEFT - 14, TOP - 14, size + 28, size + 28, 14);
     g.fillStyle(WOOD_INNER, 1).fillRect(LEFT - 6, TOP - 6, size + 12, size + 12);
 
-    for (let r = 0; r < N; r++) {
-      for (let c = 0; c < N; c++) {
-        const dark = (r + c) % 2 === 1;
-        const x = cx(c);
-        const y = cy(r);
+    // Squares are drawn in screen order. Flipping only changes which logical square each one maps to.
+    for (let dr = 0; dr < N; dr++) {
+      for (let dc = 0; dc < N; dc++) {
+        const dark = (dr + dc) % 2 === 1;
+        const x = LEFT + dc * CS + CS / 2;
+        const y = TOP + dr * CS + CS / 2;
         this.add.rectangle(x, y, CS, CS, dark ? DARK : LIGHT).setDepth(2);
-        // soft inset highlight gives each square a slight bevel
         this.add.rectangle(x, y, CS - 6, CS - 6, dark ? 0xa76f3d : 0xfff7e6, dark ? 0.35 : 0.5).setDepth(2);
         if (dark) {
           const hit = this.add.rectangle(x, y, CS, CS, 0x000000, 0).setDepth(3).setInteractive({ useHandCursor: true });
-          hit.on("pointerdown", () => this.onSquare(r, c));
+          hit.on("pointerdown", () => {
+            // Convert the tapped screen square back to the logical board square.
+            const r = this.flipped ? N - 1 - dr : dr;
+            const c = this.flipped ? N - 1 - dc : dc;
+            this.onSquare(r, c);
+          });
           hit.on("pointerover", () => this.moveHover(x, y));
           hit.on("pointerout", () => this.hover.setVisible(false));
         }
@@ -259,11 +283,16 @@ export class CheckersScene extends Phaser.Scene {
     this.hover.setPosition(x, y).setVisible(true);
   }
 
+  /** Whoever is moving can act. In two-player mode both sides are human. */
+  private humanTurn(): boolean {
+    return this.mode === "two" || this.turn === WHITE;
+  }
+
   private onSquare(r: number, c: number): void {
-    if (this.busy || this.animating || this.dead || this.turn !== HUMAN) return;
+    if (this.busy || this.animating || this.dead || !this.humanTurn()) return;
     const p = this.board[r][c];
 
-    if (p && p.c === HUMAN) {
+    if (p && p.c === this.turn) {
       const canMove = this.legal.some((m) => m.from[0] === r && m.from[1] === c);
       this.sel = canMove ? [r, c] : null;
       this.refresh();
@@ -279,9 +308,8 @@ export class CheckersScene extends Phaser.Scene {
       if (options.length > 0) {
         // Several routes can end on the same square: take the one that captures most.
         const best = options.reduce((a, b) => (b.caps.length > a.caps.length ? b : a));
-        this.myCaptures += best.caps.length;
         this.sel = null;
-        this.makeMove(best, HUMAN);
+        this.makeMove(best, this.turn);
         return;
       }
       this.sel = null;
@@ -293,6 +321,7 @@ export class CheckersScene extends Phaser.Scene {
     const mover = this.board[m.from[0]][m.from[1]];
     const lastRow = m.path[m.path.length - 1][0];
     const crowns = !!mover && !mover.k && lastRow === promoRow(by);
+    this.captures[by] += m.caps.length;
     this.board = applyMove(this.board, m);
     this.lastMove = m;
     this.justCrowned = crowns ? keyOf(m.path[m.path.length - 1]) : null;
@@ -324,7 +353,7 @@ export class CheckersScene extends Phaser.Scene {
       return;
     }
     // Chain one tween per square of the route (this Phaser build has no timeline helper).
-    const route = m.path.map(([r, c]) => ({ x: cx(c), y: cy(r) }));
+    const route = m.path.map(([r, c]) => ({ x: this.px(c), y: this.py(r) }));
     const step = (i: number): void => {
       if (i >= route.length) {
         mover.destroy();
@@ -344,7 +373,7 @@ export class CheckersScene extends Phaser.Scene {
     step(0);
   }
 
-  /** Little puff of wood-dust/sparkle where a piece is taken. */
+  /** Little puff of sparkle where a piece is taken. */
   private burst(x: number, y: number): void {
     for (let i = 0; i < 8; i++) {
       const a = (Math.PI * 2 * i) / 8;
@@ -363,47 +392,49 @@ export class CheckersScene extends Phaser.Scene {
   }
 
   private afterMove(by: Side): void {
-    const next: Side = by === HUMAN ? AI : HUMAN;
+    const next: Side = by === WHITE ? BLACK : WHITE;
     const nextMoves = legalMoves(this.board, next);
 
     if (nextMoves.length === 0) {
-      this.finish(by === HUMAN ? "win" : "lose");
+      this.finish(by);
       return;
     }
     if (this.quiet >= QUIET_LIMIT) {
-      this.finish("draw");
+      this.finish(null);
       return;
     }
 
     this.turn = next;
-    if (next === HUMAN) {
-      this.legal = nextMoves;
-      this.refresh();
-    } else {
+    this.legal = nextMoves;
+    // Pass-and-play: turn the board to face the player who is about to move.
+    if (this.mode === "two") this.flipped = next === BLACK;
+
+    if (this.mode !== "two" && next === BLACK) {
       this.legal = [];
       this.busy = true;
       this.refresh();
       this.time.delayedCall(450, () => this.aiTurn());
+    } else {
+      this.refresh();
     }
   }
 
   private aiTurn(): void {
     if (this.dead) return;
-    const moves = legalMoves(this.board, AI);
-    const chosen =
-      this.tier === 0 && Math.random() < 0.5 ? Phaser.Utils.Array.GetRandom(moves) : this.bestMove(moves, 4);
+    const moves = legalMoves(this.board, BLACK);
+    const chosen = this.mode === "easy" && Math.random() < 0.5 ? Phaser.Utils.Array.GetRandom(moves) : this.bestMove(moves, 4);
     this.busy = false;
-    this.makeMove(chosen, AI);
+    this.makeMove(chosen, BLACK);
   }
 
   /** Picks the best reply. Easy uses a single ply, Challenge looks four plies ahead. */
   private bestMove(moves: Move[], depth: number): Move {
     const shuffled = Phaser.Utils.Array.Shuffle([...moves]);
-    const lookAhead = this.tier === 0 ? 1 : depth;
+    const lookAhead = this.mode === "easy" ? 1 : depth;
     let best = shuffled[0];
     let bestScore = -Infinity;
     for (const m of shuffled) {
-      const score = search(applyMove(this.board, m), HUMAN, lookAhead - 1, -Infinity, Infinity);
+      const score = search(applyMove(this.board, m), WHITE, lookAhead - 1, -Infinity, Infinity);
       if (score > bestScore) {
         bestScore = score;
         best = m;
@@ -412,7 +443,8 @@ export class CheckersScene extends Phaser.Scene {
     return best;
   }
 
-  private finish(result: "win" | "lose" | "draw"): void {
+  /** winner is the side that just won; null means a draw. */
+  private finish(winner: Side | null): void {
     this.dead = true;
     this.busy = true;
     this.legal = [];
@@ -423,13 +455,14 @@ export class CheckersScene extends Phaser.Scene {
 
     let title = "It's a draw";
     let detail = "Too many moves without a jump or a crown.";
-    if (result === "win") {
-      title = "You won! 🎉";
-      detail = `You captured ${this.myCaptures} piece${this.myCaptures === 1 ? "" : "s"}`;
+    if (winner === WHITE) {
+      title = this.mode === "two" ? "White wins! 🎉" : "You won! 🎉";
+      detail = `White captured ${this.captures.w} piece${this.captures.w === 1 ? "" : "s"}`;
       gameAudio.coin();
-    } else if (result === "lose") {
-      title = "Computer wins";
-      detail = "So close! Try again and look for jumps first.";
+    } else if (winner === BLACK) {
+      title = this.mode === "two" ? "Black wins! 🎉" : "Computer wins";
+      detail = this.mode === "two" ? `Black captured ${this.captures.b} piece${this.captures.b === 1 ? "" : "s"}` : "So close! Try again and look for jumps first.";
+      if (this.mode === "two") gameAudio.coin();
     }
     gameAudio.stopMusic();
     this.time.delayedCall(450, () =>
@@ -455,11 +488,11 @@ export class CheckersScene extends Phaser.Scene {
     // Last move: a soft blue glow on the start and end squares.
     if (this.lastMove) {
       for (const sq of [this.lastMove.from, this.lastMove.path[this.lastMove.path.length - 1]]) {
-        add(this.add.rectangle(cx(sq[1]), cy(sq[0]), CS - 2, CS - 2, 0x60a5fa, 0.32).setDepth(6));
+        add(this.add.rectangle(this.px(sq[1]), this.py(sq[0]), CS - 2, CS - 2, 0x60a5fa, 0.32).setDepth(6));
       }
     }
 
-    const mustJump = this.turn === HUMAN && !this.dead && this.legal.length > 0 && this.legal[0].caps.length > 0;
+    const mustJump = this.humanTurn() && !this.dead && this.legal.length > 0 && this.legal[0].caps.length > 0;
     if (mustJump) {
       const seen = new Set<string>();
       for (const m of this.legal) {
@@ -467,7 +500,7 @@ export class CheckersScene extends Phaser.Scene {
         if (seen.has(k)) continue;
         seen.add(k);
         const ring = add(
-          this.add.circle(cx(m.from[1]), cy(m.from[0]), CS * 0.46).setStrokeStyle(3, 0xef4444, 1).setFillStyle(0, 0).setDepth(7)
+          this.add.circle(this.px(m.from[1]), this.py(m.from[0]), CS * 0.46).setStrokeStyle(3, 0xef4444, 1).setFillStyle(0, 0).setDepth(7)
         );
         this.tweens.add({ targets: ring, alpha: 0.35, duration: 520, yoyo: true, repeat: -1 });
       }
@@ -475,12 +508,12 @@ export class CheckersScene extends Phaser.Scene {
 
     if (this.sel) {
       const [sr, sc] = this.sel;
-      add(this.add.rectangle(cx(sc), cy(sr), CS - 2, CS - 2, 0xfde047, 0.4).setDepth(6));
-      add(this.add.rectangle(cx(sc), cy(sr), CS - 6, CS - 6, 0, 0).setStrokeStyle(3, 0xfde047, 1).setDepth(6));
+      add(this.add.rectangle(this.px(sc), this.py(sr), CS - 2, CS - 2, 0xfde047, 0.4).setDepth(6));
+      add(this.add.rectangle(this.px(sc), this.py(sr), CS - 6, CS - 6, 0, 0).setStrokeStyle(3, 0xfde047, 1).setDepth(6));
       for (const m of this.legal) {
         if (m.from[0] !== sr || m.from[1] !== sc) continue;
         const [er, ec] = m.path[m.path.length - 1];
-        const dot = add(this.add.circle(cx(ec), cy(er), 10, 0x22c55e, 0.95).setStrokeStyle(3, 0xdcfce7, 0.9).setDepth(8));
+        const dot = add(this.add.circle(this.px(ec), this.py(er), 10, 0x22c55e, 0.95).setStrokeStyle(3, 0xdcfce7, 0.9).setDepth(8));
         this.tweens.add({ targets: dot, scale: 1.25, duration: 500, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
     }
@@ -491,7 +524,7 @@ export class CheckersScene extends Phaser.Scene {
         const p = this.board[r]?.[c];
         if (!p) continue;
         const k = keyOf([r, c]);
-        const piece = this.makePiece(cx(c), cy(r), p).setDepth(10);
+        const piece = this.makePiece(this.px(c), this.py(r), p).setDepth(10);
         this.pieces.set(k, piece);
         if (this.justCrowned === k) {
           piece.setScale(0.4);
@@ -501,22 +534,44 @@ export class CheckersScene extends Phaser.Scene {
     }
     this.justCrowned = null;
 
-    // Side panel
-    this.counts.setText(`You ⚪ ${this.countPieces(HUMAN)}     Computer ⚫ ${this.countPieces(AI)}`);
+    this.updatePanel(mustJump);
+  }
+
+  private updatePanel(mustJump: boolean): void {
+    if (this.mode === "two") {
+      this.counts.setText(`White ⚪ ${this.countPieces(WHITE)}     Black ⚫ ${this.countPieces(BLACK)}`);
+    } else {
+      this.counts.setText(`You ⚪ ${this.countPieces(WHITE)}     Computer ⚫ ${this.countPieces(BLACK)}`);
+    }
+
     if (this.dead) {
       this.status.setText("Game over");
       this.detail.setText("");
-    } else if (this.turn === HUMAN) {
+      return;
+    }
+
+    if (this.mode === "two") {
+      this.status.setText(`${sideName(this.turn)}'s turn ${this.turn === WHITE ? "⚪" : "⚫"}`);
+      const pass = this.turn === BLACK ? "Pass the iPad to Black." : "White's turn.";
+      this.detail.setText(
+        this.sel
+          ? "Tap a green dot to move there."
+          : mustJump
+            ? `${pass}\nJump over a piece to capture it! Tap a red-ringed piece.`
+            : `${pass}\nTap one of your pieces, then a green dot.`
+      );
+      return;
+    }
+
+    if (this.turn === WHITE) {
       this.status.setText("Your turn ⚪");
-      if (this.sel) {
-        this.detail.setText("Tap a green dot to move there.");
-      } else {
-        this.detail.setText(
-          mustJump
+      this.detail.setText(
+        this.sel
+          ? "Tap a green dot to move there."
+          : mustJump
             ? "Jump over a black piece to capture it!\nTap a red-ringed piece to start."
             : "Tap a white piece, then a green dot.\nKings 👑 can move backwards too."
-        );
-      }
+      );
     } else {
       this.status.setText("Computer is thinking… ⚫");
       this.detail.setText("Blue squares show its last move.");
