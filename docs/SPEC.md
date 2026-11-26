@@ -51,6 +51,11 @@ Safari on iPadOS uses WebKit for every browser, so test with WebKit or with the 
 - Renderer: `pixelRatio` at most 2, antialiasing on, shadow maps at 1024 or below, no heavy post-processing.
 - If WebGL is unavailable, the game shows a clear message and offers the 2D fallback or the menu, never a blank screen.
 
+### 2.6a Board-game camera and look
+
+- **Camera (all four 3D board games):** two fingers on the board: pinch to zoom, twist to turn, drag up or down to tilt. One finger only ever taps, and a tap fires on release, so a gesture can never play a move. A **View** button under the Menu button opens preset views: Top down, My side, Left corner, Right corner, Reset. Limits: tilt 20° to 85°, zoom 0.6× to 1.5× of the default. In pass-and-play the camera still turns to the player to move and keeps that player's chosen angle. Code: `src/games/shared/orbitRig.ts`, `src/ui/gestures.ts`, `src/ui/boardControls.ts`.
+- **Soft Glass look:** tokens live in `src/ui/theme.ts` (font, ink, glass, accents), drawing helpers in `src/ui/glass.ts`. Buttons, pickers, game-over cards, the Menu button, HUD pills and the main menu all use them, and `addMenuButton` adds a soft gradient backdrop to the scene. Glass is faked (translucent panels with a light edge and soft shadow); the canvas layer can't blur. The Nunito font ships with the site and the game starts anyway if it loads slowly.
+
 ### 2.7 Browser compatibility checklist
 
 Before a game is done, confirm:
@@ -92,7 +97,7 @@ Rules for local multiplayer:
 | --- | --- | --- | --- |
 | Checkers | Board Games | Live. Computer (Easy, Challenge) and two-player. | Full-screen 3D board. Standard 8×8 draughts: compulsory jumps, multi-jumps, kings (stacked discs with a gold ring). |
 | Chess | Board Games | Live. Computer (Easy, Challenge) and two-player. | Full-screen 3D board. Castling, en passant, promotion (auto-queen in play), check, checkmate, stalemate, 50-move and repetition draws. Rules tested with standard perft counts. |
-| Ludo | Board Games | Live. 1 player vs computer, or 2–4 players on one iPad. | 3D board. Choose 1, 2 or 3 dice. Dice shake and toss onto the board. A 6 brings a token out and earns a bonus roll (up to 3 rolls in a turn). Land on a lone opponent off a safe square to send it home. Exact roll to finish. |
+| Ludo | Board Games | Live. 1 player vs computer, or 2–4 players on one iPad. | Raised 3D board (rounded tiles, chunky yard trays, embossed stars, centre wedges), landing squash, confetti when a token gets home, a ring where a token is captured, and a pulse on the current start square. Choose 1, 2 or 3 dice. Dice shake and toss onto the board. A 6 brings a token out and earns a bonus roll (up to 3 rolls in a turn). Land on a lone opponent off a safe square to send it home. Exact roll to finish. |
 | Snakes & Ladders | Board Games | Live. 1 player vs computer, or 2–4 players on one iPad. | 3D board with 10 snakes and 9 ladders. Choose 1, 2 or 3 dice (total is moved). A 6 on one die, or doubles on several, earns a bonus roll. Overshooting 100 bounces back. |
 | Other arcade, learn and puzzle games | Arcade / Learn / Puzzles | Live | Brought to this spec as they are changed. |
 
@@ -119,6 +124,8 @@ Rules for local multiplayer:
 
 - Ludo house rules: a token captures every opponent token on a non-safe square it lands on; there is no blocking; the first player to bring all four tokens home wins. With several dice, each die is a separate move: tap a die, then a token.
 - Chess promotes pawns to Queens in play. The rules module supports all four promotion pieces, but the UI does not offer a choice yet.
+- Most arcade, learning and puzzle games still use their own artwork and text styles inside the screen; only the shared UI, menu and backdrop (plus Flappy's menu button) have the Soft Glass look so far.
+- On phones in landscape the 960-wide canvas shrinks buttons to about 37 to 40 px on screen, a little under the 44 px target; a phone-specific scale-up is not done.
 - Nothing has been run on a physical iPad. Checks so far use a headless browser (Chromium, with a WebGL software renderer, and an iPad Pro 11 device emulation with touch taps). Confirm on a real iPad before calling a game finished.
 
 ## 8. Definition of done for a new game

@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch, touchPad } from "../input/touchPad";
 import { setTouchChrome } from "../input/touchChrome";
+import { addMenuButton } from "../ui/arcadeKit";
 import { addEndGameButtons } from "../ui/endGameButtons";
 
 /** Classic Flappy Bird feel: constant speed, constant gap, endless green pipes. */
@@ -34,8 +35,7 @@ export class FlappyScene extends Phaser.Scene {
   private dead = false;
   private flapKey!: Phaser.Input.Keyboard.Key;
   private endShown = false;
-  private menuBg!: Phaser.GameObjects.Rectangle;
-  private menuLabel!: Phaser.GameObjects.Text;
+  private hideMenu!: () => void;
   private gameOverLockUntil = 0;
   private flapPointer!: (pointer: Phaser.Input.Pointer) => void;
 
@@ -148,29 +148,9 @@ export class FlappyScene extends Phaser.Scene {
   }
 
   private makeMenuButton(): void {
-    const x = 74;
-    const y = 38;
-    this.menuBg = this.add
-      .rectangle(x, y, 116, 40, 0x0f172a, 0.55)
-      .setScrollFactor(0)
-      .setDepth(60)
-      .setInteractive({ useHandCursor: true });
-    this.menuLabel = this.add
-      .text(x, y, "Menu", {
-        fontFamily: "system-ui, sans-serif",
-        fontSize: "16px",
-        color: "#f8fafc",
-        fontStyle: "700",
-      })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(61)
-      .setInteractive({ useHandCursor: true });
-    const back = (): void => {
+    this.hideMenu = addMenuButton(this, () => {
       if (!this.dead) this.goMenu();
-    };
-    this.menuBg.on("pointerdown", back);
-    this.menuLabel.on("pointerdown", back);
+    });
   }
 
   private goMenu(): void {
@@ -249,8 +229,7 @@ export class FlappyScene extends Phaser.Scene {
     this.gameOverLockUntil = this.time.now + 450;
 
     setTouchChrome("gameover");
-    this.menuBg.setVisible(false);
-    this.menuLabel.setVisible(false);
+    this.hideMenu();
 
     this.add
       .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x0f172a, 0.45)

@@ -7,7 +7,7 @@ A collection of arcade, learning, puzzle and board games for kids, built with [P
 ## Games
 
 - **Arcade, Learn, Puzzles:** runner, flappy, snake, maths, words, clock, sudoku and more.
-- **Board Games (3D, vs the computer or 2 to 4 players on one iPad):** Checkers, Chess, Ludo, Snakes & Ladders.
+- **Board Games (3D, vs the computer or 2 to 4 players on one iPad):** Checkers, Chess, Ludo, Snakes & Ladders. Pinch, twist and tilt with two fingers, or use the View button, to look from other angles.
 
 ## Commands
 

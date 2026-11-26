@@ -1,6 +1,6 @@
 # Soft Glass overhaul: design
 
-Status: **awaiting approval.** Nothing in this document is built yet.
+Status: **approved.** Steps 1 (chess pieces), 2 (shared look) and 3 (camera controls, Ludo 3D) are built. Steps 4 (questions) and 5 (arcade games' own artwork) are still to do.
 
 ## Intent and why
 
