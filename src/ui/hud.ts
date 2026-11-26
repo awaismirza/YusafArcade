@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import { FONT } from "./arcadeKit";
+import { drawGlass } from "./glass";
+import { FONT } from "./theme";
 
 /**
  * Floating status display for full-screen 3D boards: a large status line at the top, a smaller hint at the
@@ -15,15 +16,15 @@ export class Hud {
   constructor(scene: Phaser.Scene) {
     this.pills = scene.add.graphics().setDepth(5);
     this.status = scene.add
-      .text(480, 36, "", { fontFamily: FONT, fontSize: "30px", color: "#ffffff", fontStyle: "700", align: "center" })
+      .text(480, 36, "", { fontFamily: FONT, fontSize: "30px", color: "#ffffff", fontStyle: "800", align: "center" })
       .setOrigin(0.5)
       .setDepth(6);
     this.detail = scene.add
-      .text(480, 506, "", { fontFamily: FONT, fontSize: "19px", color: "#e0f2fe", align: "center", wordWrap: { width: 760 }, lineSpacing: 4 })
+      .text(480, 506, "", { fontFamily: FONT, fontSize: "19px", color: "#efeaff", align: "center", fontStyle: "600", wordWrap: { width: 760 }, lineSpacing: 4 })
       .setOrigin(0.5)
       .setDepth(6);
     this.counts = scene.add
-      .text(944, 36, "", { fontFamily: FONT, fontSize: "18px", color: "#bfdbfe", align: "right", fontStyle: "600" })
+      .text(944, 36, "", { fontFamily: FONT, fontSize: "18px", color: "#e4defc", align: "right", fontStyle: "700" })
       .setOrigin(1, 0.5)
       .setDepth(6);
   }
@@ -57,8 +58,9 @@ export class Hud {
       if (!t.text) return;
       const w = t.width + padX * 2;
       const h = t.height + padY * 2;
-      g.fillStyle(0x0f172a, 0.62);
-      g.fillRoundedRect(t.x - t.originX * t.width - padX, t.y - t.originY * t.height - padY, w, h, Math.min(20, h / 2));
+      const left = t.x - t.originX * t.width - padX;
+      const top = t.y - t.originY * t.height - padY;
+      drawGlass(g, left + w / 2, top + h / 2, w, h, { tint: 0x1b1640, alpha: 0.5, radius: Math.min(24, h / 2) });
     };
     pill(this.status, 22, 8);
     pill(this.detail, 18, 8);

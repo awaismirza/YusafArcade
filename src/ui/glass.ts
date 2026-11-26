@@ -17,8 +17,11 @@ export function drawGlass(g: Phaser.GameObjects.Graphics, x: number, y: number, 
   g.fillRoundedRect(left, top + 4, w, h, r);
   g.fillStyle(tint, alpha);
   g.fillRoundedRect(left, top, w, h, r);
+  // A soft lighter band across the top, inset so it stays inside the rounded corners.
+  const band = Math.min(h * 0.45, 40);
+  const inset = Math.max(4, r * 0.45);
   g.fillStyle(0xffffff, 0.12);
-  g.fillRoundedRect(left + 2, top + 2, w - 4, h * 0.45, Math.max(2, r - 2));
+  g.fillRoundedRect(left + inset, top + 3, w - inset * 2, band, Math.min(band / 2, Math.max(2, r * 0.6)));
   g.lineStyle(1.5, 0xffffff, GLASS.edgeAlpha);
   g.strokeRoundedRect(left, top, w, h, r);
 }
@@ -43,8 +46,10 @@ export function drawPill(
   g.fillRoundedRect(left, top + lip, w, h - 3, r);
   g.fillStyle(color, 1);
   g.fillRoundedRect(left, top, w, h - 3, r);
+  const band = Math.min((h - 3) * 0.42, 44);
+  const inset = Math.max(6, r * 0.5);
   g.fillStyle(shade(color, 0.35), 0.55);
-  g.fillRoundedRect(left + 3, top + 3, w - 6, (h - 3) * 0.42, Math.max(2, r - 3));
+  g.fillRoundedRect(left + inset, top + 4, w - inset * 2, band, Math.min(band / 2, Math.max(2, r * 0.6)));
   g.lineStyle(1.5, 0xffffff, 0.35);
   g.strokeRoundedRect(left, top, w, h - 3, r);
 }
