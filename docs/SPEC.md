@@ -101,6 +101,11 @@ Rules for local multiplayer:
 | Snakes & Ladders | Board Games | Live. 1 player vs computer, or 2–4 players on one iPad. | 3D board with 10 snakes and 9 ladders. Choose 1, 2 or 3 dice (total is moved). A 6 on one die, or doubles on several, earns a bonus roll. Overshooting 100 bounces back. |
 | Other arcade, learn and puzzle games | Arcade / Learn / Puzzles | Live | Brought to this spec as they are changed. |
 
+### Shared Soft Glass UI and question data
+
+- `src/ui/palettes.ts` (per-game gradient), `background.ts`, `chips.ts` (HUD pills), `progress.ts`, `tiles.ts`, `roundTile.ts` (rounded tile that behaves like a Phaser Rectangle), `fx.ts` (`confetti`, `popText`, `winBurst`).
+- Question banks live in `src/data/` (`quizBank.ts`, `quizEasyBank.ts`, `wordBank.ts`, `countries.ts`, `oddPools.ts`). `validate.ts` checks every entry and `pickRounds.ts` picks distinct rounds. `tests/questions.test.ts` enforces validity, no duplicates and minimum sizes; `node scripts/audit-questions.mjs` prints the counts.
+
 ### Shared 3D building blocks
 
 | Module | What it does |
@@ -124,7 +129,9 @@ Rules for local multiplayer:
 
 - Ludo house rules: a token captures every opponent token on a non-safe square it lands on; there is no blocking; the first player to bring all four tokens home wins. With several dice, each die is a separate move: tap a die, then a token.
 - Chess promotes pawns to Queens in play. The rules module supports all four promotion pieces, but the UI does not offer a choice yet.
-- Most arcade, learning and puzzle games still use their own artwork and text styles inside the screen; only the shared UI, menu and backdrop (plus Flappy's menu button) have the Soft Glass look so far.
+- Arcade games keep their own artwork (sky, pipes, rocks, bricks); they share the Soft Glass HUD, buttons and backdrop. Flappy, Dodger, Stack, Whack and Catch were not given new in-play art. Every scene has a gradient backdrop from `src/ui/palettes.ts` (contrast is tested).
+- Capture sparkles and a king-in-check pulse for Chess/Checkers are not built (needs 3D-to-screen projection). Win confetti is a 2D overlay (`winBurst` in `src/ui/fx.ts`).
+- Question generators for Fractions, Operator, Pattern, Math, Shapes and Robot were not extended in this pass; only Quiz, Words, World and Odd One Out banks were.
 - On phones in landscape the 960-wide canvas shrinks buttons to about 37 to 40 px on screen, a little under the 44 px target; a phone-specific scale-up is not done.
 - Nothing has been run on a physical iPad. Checks so far use a headless browser (Chromium, with a WebGL software renderer, and an iPad Pro 11 device emulation with touch taps). Confirm on a real iPad before calling a game finished.
 
