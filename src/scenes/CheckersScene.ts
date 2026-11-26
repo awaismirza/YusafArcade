@@ -12,18 +12,24 @@ type Move = { from: Sq; path: Sq[]; caps: Sq[] };
 
 const N = 8;
 const CS = 56;
-const LEFT = 140;
+const LEFT = 160;
 const TOP = 62;
-const LIGHT = 0xf5deb3;
-const DARK = 0x8b5a2b;
+const LIGHT = 0xf1d9a8;
+const DARK = 0x8a5a2c;
+const WOOD_FRAME = 0x6b4423;
+const WOOD_INNER = 0x3b2412;
 const HUMAN: Side = "w";
 const AI: Side = "b";
 /** Moves without a capture or a crown before the game is a draw (60 plies). */
 const QUIET_LIMIT = 60;
+const STEP_MS = 190;
 
 const inside = (r: number, c: number): boolean => r >= 0 && r < N && c >= 0 && c < N;
 const cloneBoard = (b: Board): Board => b.map((row) => row.map((p) => (p ? { ...p } : null)));
 const promoRow = (side: Side): number => (side === "w" ? 0 : N - 1);
+const cx = (c: number): number => LEFT + c * CS + CS / 2;
+const cy = (r: number): number => TOP + r * CS + CS / 2;
+const keyOf = (sq: Sq): string => `${sq[0]},${sq[1]}`;
 
 function dirsFor(p: Piece): [number, number][] {
   if (p.k) return [[-1, -1], [-1, 1], [1, -1], [1, 1]];
@@ -146,13 +152,17 @@ export class CheckersScene extends Phaser.Scene {
   private legal: Move[] = [];
   private sel: Sq | null = null;
   private lastMove: Move | null = null;
+  private justCrowned: string | null = null;
   private tier: 0 | 1 = 0;
   private quiet = 0;
   private busy = false;
+  private animating = false;
   private dead = false;
   private lockUntil = 0;
   private myCaptures = 0;
+  private pieces = new Map<string, Phaser.GameObjects.Container>();
   private overlays: Phaser.GameObjects.GameObject[] = [];
+  private hover!: Phaser.GameObjects.Rectangle;
   private status!: Phaser.GameObjects.Text;
   private detail!: Phaser.GameObjects.Text;
   private counts!: Phaser.GameObjects.Text;
@@ -168,34 +178,35 @@ export class CheckersScene extends Phaser.Scene {
     this.legal = [];
     this.sel = null;
     this.lastMove = null;
+    this.justCrowned = null;
     this.quiet = 0;
     this.busy = false;
+    this.animating = false;
     this.dead = false;
     this.lockUntil = 0;
     this.myCaptures = 0;
+    this.pieces = new Map();
     this.overlays = [];
     resetTaps();
   }
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x172554);
+    this.cameras.main.setBackgroundColor(0x0f172a);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
     this.hideMenu = addMenuButton(this, () => {
       if (!this.dead) this.scene.start("Menu");
     });
 
-    // Side panel text
-    const px = 650;
+    // Side panel
+    const px = 668;
+    this.add.rectangle(px - 16, 300, 4, 360, 0x334155, 0.6);
     this.status = this.add.text(px, 170, "", { fontFamily: FONT, fontSize: "26px", color: "#ffffff", fontStyle: "700" }).setOrigin(0, 0.5);
-    this.counts = this.add.text(px, 226, "", { fontFamily: FONT, fontSize: "20px", color: "#bfdbfe" }).setOrigin(0, 0.5);
-    this.detail = this.add.text(px, 290, "", {
-      fontFamily: FONT,
-      fontSize: "19px",
-      color: "#e0f2fe",
-      wordWrap: { width: 260 },
-    }).setOrigin(0, 0);
+    this.counts = this.add.text(px, 214, "", { fontFamily: FONT, fontSize: "19px", color: "#bfdbfe" }).setOrigin(0, 0.5);
+    this.detail = this.add
+      .text(px, 262, "", { fontFamily: FONT, fontSize: "18px", color: "#e0f2fe", lineSpacing: 6, wordWrap: { width: 262 } })
+      .setOrigin(0, 0);
 
     this.buildBoard();
 
@@ -213,27 +224,43 @@ export class CheckersScene extends Phaser.Scene {
     );
   }
 
-  /** Draws the static squares and makes the dark ones clickable. */
+  /** Wooden frame, shadow and the 64 squares. Dark squares are clickable. */
   private buildBoard(): void {
+    const size = N * CS;
+    const g = this.add.graphics().setDepth(1);
+    // drop shadow, outer frame, inner recess
+    g.fillStyle(0x000000, 0.4).fillRoundedRect(LEFT - 14, TOP - 10, size + 36, size + 36, 18);
+    g.fillStyle(WOOD_FRAME, 1).fillRoundedRect(LEFT - 18, TOP - 18, size + 36, size + 36, 18);
+    g.fillStyle(0x8f6234, 1).fillRoundedRect(LEFT - 14, TOP - 14, size + 28, size + 28, 14);
+    g.fillStyle(WOOD_INNER, 1).fillRect(LEFT - 6, TOP - 6, size + 12, size + 12);
+
     for (let r = 0; r < N; r++) {
       for (let c = 0; c < N; c++) {
         const dark = (r + c) % 2 === 1;
-        const x = LEFT + c * CS + CS / 2;
-        const y = TOP + r * CS + CS / 2;
-        const sq = this.add.rectangle(x, y, CS, CS, dark ? DARK : LIGHT);
+        const x = cx(c);
+        const y = cy(r);
+        this.add.rectangle(x, y, CS, CS, dark ? DARK : LIGHT).setDepth(2);
+        // soft inset highlight gives each square a slight bevel
+        this.add.rectangle(x, y, CS - 6, CS - 6, dark ? 0xa76f3d : 0xfff7e6, dark ? 0.35 : 0.5).setDepth(2);
         if (dark) {
-          sq.setInteractive({ useHandCursor: true });
-          sq.on("pointerdown", () => this.onSquare(r, c));
+          const hit = this.add.rectangle(x, y, CS, CS, 0x000000, 0).setDepth(3).setInteractive({ useHandCursor: true });
+          hit.on("pointerdown", () => this.onSquare(r, c));
+          hit.on("pointerover", () => this.moveHover(x, y));
+          hit.on("pointerout", () => this.hover.setVisible(false));
         }
       }
     }
-    const frame = this.add.graphics().setDepth(5);
-    frame.lineStyle(4, 0x0f172a, 1);
-    frame.strokeRect(LEFT, TOP, N * CS, N * CS);
+
+    this.hover = this.add.rectangle(0, 0, CS - 4, CS - 4, 0xffffff, 0.16).setDepth(4).setVisible(false);
+  }
+
+  private moveHover(x: number, y: number): void {
+    if (this.busy || this.dead) return;
+    this.hover.setPosition(x, y).setVisible(true);
   }
 
   private onSquare(r: number, c: number): void {
-    if (this.busy || this.dead || this.turn !== HUMAN) return;
+    if (this.busy || this.animating || this.dead || this.turn !== HUMAN) return;
     const p = this.board[r][c];
 
     if (p && p.c === HUMAN) {
@@ -245,22 +272,21 @@ export class CheckersScene extends Phaser.Scene {
 
     if (this.sel) {
       const [sr, sc] = this.sel;
-      const options = this.legal.filter((m) => m.from[0] === sr && m.from[1] === sc && m.path[m.path.length - 1][0] === r && m.path[m.path.length - 1][1] === c);
+      const options = this.legal.filter((m) => {
+        const end = m.path[m.path.length - 1];
+        return m.from[0] === sr && m.from[1] === sc && end[0] === r && end[1] === c;
+      });
       if (options.length > 0) {
         // Several routes can end on the same square: take the one that captures most.
         const best = options.reduce((a, b) => (b.caps.length > a.caps.length ? b : a));
-        this.playerMove(best);
+        this.myCaptures += best.caps.length;
+        this.sel = null;
+        this.makeMove(best, HUMAN);
         return;
       }
       this.sel = null;
       this.refresh();
     }
-  }
-
-  private playerMove(m: Move): void {
-    this.sel = null;
-    this.myCaptures += m.caps.length;
-    this.makeMove(m, HUMAN);
   }
 
   private makeMove(m: Move, by: Side): void {
@@ -269,9 +295,71 @@ export class CheckersScene extends Phaser.Scene {
     const crowns = !!mover && !mover.k && lastRow === promoRow(by);
     this.board = applyMove(this.board, m);
     this.lastMove = m;
+    this.justCrowned = crowns ? keyOf(m.path[m.path.length - 1]) : null;
     this.quiet = m.caps.length === 0 && !crowns ? this.quiet + 1 : 0;
     gameAudio.jump();
-    this.afterMove(by);
+    this.animateMove(m, () => this.afterMove(by));
+  }
+
+  /** Slides the moving piece along its route, and fades out anything it jumps. */
+  private animateMove(m: Move, done: () => void): void {
+    this.animating = true;
+    this.overlays.forEach((o) => o.destroy());
+    this.overlays = [];
+
+    for (const cap of m.caps) {
+      const k = keyOf(cap);
+      const o = this.pieces.get(k);
+      if (!o) continue;
+      this.pieces.delete(k);
+      this.burst(o.x, o.y);
+      this.tweens.add({ targets: o, alpha: 0, scale: 0.3, duration: 260, ease: "Quad.easeIn", onComplete: () => o.destroy() });
+    }
+
+    const mover = this.pieces.get(keyOf(m.from));
+    this.pieces.delete(keyOf(m.from));
+    if (!mover) {
+      this.animating = false;
+      done();
+      return;
+    }
+    // Chain one tween per square of the route (this Phaser build has no timeline helper).
+    const route = m.path.map(([r, c]) => ({ x: cx(c), y: cy(r) }));
+    const step = (i: number): void => {
+      if (i >= route.length) {
+        mover.destroy();
+        this.animating = false;
+        done();
+        return;
+      }
+      this.tweens.add({
+        targets: mover,
+        x: route[i].x,
+        y: route[i].y,
+        duration: STEP_MS,
+        ease: "Sine.easeInOut",
+        onComplete: () => step(i + 1),
+      });
+    };
+    step(0);
+  }
+
+  /** Little puff of wood-dust/sparkle where a piece is taken. */
+  private burst(x: number, y: number): void {
+    for (let i = 0; i < 8; i++) {
+      const a = (Math.PI * 2 * i) / 8;
+      const dot = this.add.circle(x, y, 4, 0xfde047, 1).setDepth(20);
+      this.tweens.add({
+        targets: dot,
+        x: x + Math.cos(a) * 34,
+        y: y + Math.sin(a) * 34,
+        alpha: 0,
+        scale: 0.4,
+        duration: 420,
+        ease: "Quad.easeOut",
+        onComplete: () => dot.destroy(),
+      });
+    }
   }
 
   private afterMove(by: Side): void {
@@ -295,7 +383,7 @@ export class CheckersScene extends Phaser.Scene {
       this.legal = [];
       this.busy = true;
       this.refresh();
-      this.time.delayedCall(550, () => this.aiTurn());
+      this.time.delayedCall(450, () => this.aiTurn());
     }
   }
 
@@ -303,9 +391,7 @@ export class CheckersScene extends Phaser.Scene {
     if (this.dead) return;
     const moves = legalMoves(this.board, AI);
     const chosen =
-      this.tier === 0 && Math.random() < 0.5
-        ? Phaser.Utils.Array.GetRandom(moves)
-        : this.bestMove(moves, 4);
+      this.tier === 0 && Math.random() < 0.5 ? Phaser.Utils.Array.GetRandom(moves) : this.bestMove(moves, 4);
     this.busy = false;
     this.makeMove(chosen, AI);
   }
@@ -351,43 +437,51 @@ export class CheckersScene extends Phaser.Scene {
     );
   }
 
-  /** Redraws pieces, highlights and the side panel. */
+  /** Rebuilds the highlights, pieces and side panel from the board. Not called mid-animation. */
   private refresh(): void {
-    this.overlays.forEach((o) => o.destroy());
+    this.overlays.forEach((o) => {
+      this.tweens.killTweensOf(o);
+      o.destroy();
+    });
     this.overlays = [];
     const add = <T extends Phaser.GameObjects.GameObject>(o: T): T => {
       this.overlays.push(o);
       return o;
     };
-    const cx = (c: number): number => LEFT + c * CS + CS / 2;
-    const cy = (r: number): number => TOP + r * CS + CS / 2;
 
-    // Last move, so a child can see what the computer just did.
+    this.pieces.forEach((o) => o.destroy());
+    this.pieces.clear();
+
+    // Last move: a soft blue glow on the start and end squares.
     if (this.lastMove) {
-      for (const [r, c] of [this.lastMove.from, this.lastMove.path[this.lastMove.path.length - 1]]) {
-        add(this.add.rectangle(cx(c), cy(r), CS, CS, 0x60a5fa, 0.35).setDepth(6));
+      for (const sq of [this.lastMove.from, this.lastMove.path[this.lastMove.path.length - 1]]) {
+        add(this.add.rectangle(cx(sq[1]), cy(sq[0]), CS - 2, CS - 2, 0x60a5fa, 0.32).setDepth(6));
       }
     }
 
-    // Mandatory capture: mark the pieces that must jump.
-    const mustJump = this.turn === HUMAN && this.legal.length > 0 && this.legal[0].caps.length > 0;
-    if (mustJump && !this.dead) {
+    const mustJump = this.turn === HUMAN && !this.dead && this.legal.length > 0 && this.legal[0].caps.length > 0;
+    if (mustJump) {
       const seen = new Set<string>();
       for (const m of this.legal) {
-        const key = m.from.join(",");
-        if (seen.has(key)) continue;
-        seen.add(key);
-        add(this.add.circle(cx(m.from[1]), cy(m.from[0]), CS * 0.44).setStrokeStyle(3, 0xef4444, 1).setFillStyle(0, 0).setDepth(7));
+        const k = keyOf(m.from);
+        if (seen.has(k)) continue;
+        seen.add(k);
+        const ring = add(
+          this.add.circle(cx(m.from[1]), cy(m.from[0]), CS * 0.46).setStrokeStyle(3, 0xef4444, 1).setFillStyle(0, 0).setDepth(7)
+        );
+        this.tweens.add({ targets: ring, alpha: 0.35, duration: 520, yoyo: true, repeat: -1 });
       }
     }
 
     if (this.sel) {
       const [sr, sc] = this.sel;
-      add(this.add.rectangle(cx(sc), cy(sr), CS, CS, 0xfde047, 0.45).setDepth(6));
+      add(this.add.rectangle(cx(sc), cy(sr), CS - 2, CS - 2, 0xfde047, 0.4).setDepth(6));
+      add(this.add.rectangle(cx(sc), cy(sr), CS - 6, CS - 6, 0, 0).setStrokeStyle(3, 0xfde047, 1).setDepth(6));
       for (const m of this.legal) {
         if (m.from[0] !== sr || m.from[1] !== sc) continue;
         const [er, ec] = m.path[m.path.length - 1];
-        add(this.add.circle(cx(ec), cy(er), 9, 0x22c55e, 0.95).setDepth(8));
+        const dot = add(this.add.circle(cx(ec), cy(er), 10, 0x22c55e, 0.95).setStrokeStyle(3, 0xdcfce7, 0.9).setDepth(8));
+        this.tweens.add({ targets: dot, scale: 1.25, duration: 500, yoyo: true, repeat: -1, ease: "Sine.easeInOut" });
       }
     }
 
@@ -396,22 +490,27 @@ export class CheckersScene extends Phaser.Scene {
       for (let c = 0; c < N; c++) {
         const p = this.board[r]?.[c];
         if (!p) continue;
-        const fill = p.c === "w" ? 0xf8fafc : 0x111827;
-        const rim = p.c === "w" ? 0x94a3b8 : 0x6b7280;
-        add(this.add.circle(cx(c), cy(r), CS * 0.38, fill).setStrokeStyle(4, rim, 1).setDepth(10));
-        if (p.k) add(this.add.circle(cx(c), cy(r), CS * 0.2).setStrokeStyle(3, 0xfacc15, 1).setFillStyle(0, 0).setDepth(11));
+        const k = keyOf([r, c]);
+        const piece = this.makePiece(cx(c), cy(r), p).setDepth(10);
+        this.pieces.set(k, piece);
+        if (this.justCrowned === k) {
+          piece.setScale(0.4);
+          this.tweens.add({ targets: piece, scale: 1, duration: 480, ease: "Back.easeOut" });
+        }
       }
     }
+    this.justCrowned = null;
 
     // Side panel
-    const mine = this.countPieces(HUMAN);
-    const theirs = this.countPieces(AI);
-    this.counts.setText(`You ⚪ ${mine}     Computer ⚫ ${theirs}`);
+    this.counts.setText(`You ⚪ ${this.countPieces(HUMAN)}     Computer ⚫ ${this.countPieces(AI)}`);
     if (this.dead) {
       this.status.setText("Game over");
+      this.detail.setText("");
     } else if (this.turn === HUMAN) {
       this.status.setText("Your turn ⚪");
-      if (!this.busy && this.sel === null && this.legal.length > 0) {
+      if (this.sel) {
+        this.detail.setText("Tap a green dot to move there.");
+      } else {
         this.detail.setText(
           mustJump
             ? "Jump over a black piece to capture it!\nTap a red-ringed piece to start."
@@ -420,9 +519,41 @@ export class CheckersScene extends Phaser.Scene {
       }
     } else {
       this.status.setText("Computer is thinking… ⚫");
-      this.detail.setText("Watch the blue squares for its last move.");
+      this.detail.setText("Blue squares show its last move.");
     }
-    if (this.sel) this.detail.setText("Now tap a green dot to move there.");
+  }
+
+  /** Layered piece: soft shadow, rim, body with a top-left sheen, and a crown for kings. */
+  private makePiece(x: number, y: number, p: Piece): Phaser.GameObjects.Container {
+    const R = CS * 0.38;
+    const rim = p.c === "w" ? 0xa8a29e : 0x020617;
+    const body = p.c === "w" ? 0xfafaf9 : 0x262626;
+    const parts: Phaser.GameObjects.GameObject[] = [
+      this.add.circle(3, 5, R, 0x000000, 0.4),
+      this.add.circle(0, 0, R, rim),
+      this.add.circle(0, 0, R - 3, body),
+      this.add.circle(-R * 0.25, -R * 0.28, R * 0.52, 0xffffff, p.c === "w" ? 0.6 : 0.14),
+      this.add.circle(0, 0, R * 0.64).setStrokeStyle(2, rim, 0.7).setFillStyle(0, 0),
+    ];
+    if (p.k) parts.push(this.makeCrown());
+    return this.add.container(x, y, parts);
+  }
+
+  private makeCrown(): Phaser.GameObjects.Graphics {
+    const g = this.add.graphics();
+    g.fillStyle(0xfacc15, 1).lineStyle(2, 0xa16207, 1);
+    g.beginPath();
+    g.moveTo(-11, 6);
+    g.lineTo(-13, -7);
+    g.lineTo(-6, -1);
+    g.lineTo(0, -10);
+    g.lineTo(6, -1);
+    g.lineTo(13, -7);
+    g.lineTo(11, 6);
+    g.closePath();
+    g.fillPath();
+    g.strokePath();
+    return g;
   }
 
   private countPieces(side: Side): number {

@@ -37,6 +37,9 @@ const PUZZLES: Entry[] = [
   ["Slide Puzzle 🧩", "Put the tiles in order", 0xb45309, "Slide"],
   ["Mini Sudoku 🔢", "4×4 and 6×6 number logic", 0x1e40af, "Sudoku"],
   ["Code the Robot 🤖", "Program the robot's route", 0x0d9488, "Robot"],
+];
+
+const BOARD: Entry[] = [
   ["Checkers ⚫", "Jump to capture · crown a king", 0x3f6212, "Checkers"],
 ];
 
@@ -44,6 +47,7 @@ const TABS: { name: string; note: string; games: Entry[] }[] = [
   { name: "🎮 Arcade", note: "", games: ARCADE },
   { name: "🧠 Learn", note: "Learning games for ages 7–10 · pick Easy or Challenge", games: LEARN },
   { name: "🧩 Puzzles", note: "Brain puzzles for ages 7–10 · pick Easy or Challenge", games: PUZZLES },
+  { name: "🎲 Board Games", note: "Classic board games · play against the computer", games: BOARD },
 ];
 
 let lastTab = 0;
@@ -67,8 +71,9 @@ export class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     TABS.forEach(({ name }, i) => {
-      const x = GAME_WIDTH / 2 + (i - 1) * 220;
-      const bg = this.add.rectangle(x, 104, 204, 44, 0x1e293b).setInteractive({ useHandCursor: true });
+      // Spread the tabs evenly around the centre, so four tabs still fit the 960px width.
+      const x = GAME_WIDTH / 2 + (i - (TABS.length - 1) / 2) * 200;
+      const bg = this.add.rectangle(x, 104, 186, 44, 0x1e293b).setInteractive({ useHandCursor: true });
       const label = this.add.text(x, 104, name, { fontFamily: FONT, fontSize: "20px", color: "#cbd5e1", fontStyle: "700" }).setOrigin(0.5);
       bg.on("pointerdown", () => this.show(i));
       label.setInteractive({ useHandCursor: true }).on("pointerdown", () => this.show(i));
