@@ -10,7 +10,7 @@ import { addBoardControls } from "../ui/boardControls";
 import { OrbitRig } from "../games/shared/orbitRig";
 import { DiceSet } from "../games/shared/dice3d";
 import { buildPawn } from "../games/shared/pawn3d";
-import { buildLudoBoard, SURFACE_Y, wx, wz } from "../games/ludo/board3d";
+import { buildLudoBoard, DICE_Y, HOME_Y, SURFACE_Y, wx, wz, YARD_Y } from "../games/ludo/board3d";
 import {
   allChoices, applyMove, cellOf, Choice, chooseMove, COLOR_HEX, COLOR_NAMES, earnsBonus, FINAL, hasWon, homeCount, MAX_ROLLS_PER_TURN,
   newTokens, seatColors, Tokens, YARD, YARD_SLOTS,
@@ -47,6 +47,8 @@ export class LudoScene extends Phaser.Scene {
   private markers = new THREE.Group();
   private movableKeys = new Set<string>();
   private rig: OrbitRig | null = null;
+  /** A pulsing ring on the start square of whoever's turn it is. */
+  private turnRing: THREE.Mesh | null = null;
   private hud!: Hud;
   private rollBtn: Btn | null = null;
   private hideMenu!: () => void;
@@ -78,6 +80,7 @@ export class LudoScene extends Phaser.Scene {
     this.movableKeys = new Set();
     this.rollBtn = null;
     this.rig = null;
+    this.turnRing = null;
     resetTaps();
   }
 
@@ -94,7 +97,7 @@ export class LudoScene extends Phaser.Scene {
       if (this.phase !== "over") this.scene.start("Menu");
     });
 
-    this.stage = ThreeStage.create(this, { key: TEX_KEY, backdrop: ["#7c2d12", "#431407"] });
+    this.stage = ThreeStage.create(this, { key: TEX_KEY, backdrop: ["#6d4fd6", "#241a63"] });
     this.hud = new Hud(this);
 
     if (!this.stage) {
@@ -137,8 +140,12 @@ export class LudoScene extends Phaser.Scene {
 
   private buildWorld(stage: ThreeStage): void {
     stage.scene.add(buildLudoBoard(), this.markers);
-    this.rig = new OrbitRig(stage.camera, { target: new THREE.Vector3(0, 0, 0.9), distance: 24.4, elevationDeg: 61.6 });
+    this.rig = new OrbitRig(stage.camera, { target: new THREE.Vector3(0, 0, 0.9), distance: 25.5, elevationDeg: 54 });
     addBoardControls(this, this.rig, (x, y) => this.onTap(x, y));
+    this.turnRing = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.07, 10, 40), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    this.turnRing.rotation.x = Math.PI / 2;
+    this.turnRing.visible = false;
+    stage.scene.add(this.turnRing);
     stage.keyLight.position.set(5, 18, 8);
     stage.keyLight.shadow.camera.left = -12;
     stage.keyLight.shadow.camera.right = 12;
@@ -191,10 +198,10 @@ export class LudoScene extends Phaser.Scene {
         const p = new THREE.Vector3();
         if (r === YARD) {
           const [c, rr] = YARD_SLOTS[id.color][id.i];
-          p.set(wx(c), SURFACE_Y + 0.1, wz(rr));
+          p.set(wx(c), YARD_Y, wz(rr));
         } else {
           const [c, rr] = cellOf(id.color, r);
-          p.set(wx(c), SURFACE_Y + 0.02, wz(rr));
+          p.set(wx(c), r === FINAL ? HOME_Y : SURFACE_Y + 0.02, wz(rr));
           if (list.length > 1) {
             const a = (n / list.length) * Math.PI * 2;
             p.x += Math.cos(a) * 0.24;
@@ -228,6 +235,10 @@ export class LudoScene extends Phaser.Scene {
     this.phase = "roll";
     this.clearMarkers();
     this.dice?.setSelected(null);
+    if (this.turnRing) {
+      const [c, r] = cellOf(this.color, 0);
+      this.turnRing.position.set(wx(c), SURFACE_Y + 0.08, wz(r));
+    }
     this.updateHud();
     if (this.isHuman) {
       this.rollBtn?.container.setVisible(true);
@@ -254,7 +265,7 @@ export class LudoScene extends Phaser.Scene {
     this.hud.setDetail("");
     gameAudio.jump();
     this.dice.roll(this.queue, this.time.now, this.values, {
-      center: new THREE.Vector3(0, SURFACE_Y + 0.02, 0),
+      center: new THREE.Vector3(0, DICE_Y, 0),
       onThrow: () => gameAudio.hit(),
       onLand: () => this.afterRoll(),
     });
@@ -323,7 +334,7 @@ export class LudoScene extends Phaser.Scene {
       );
       ring.rotation.x = Math.PI / 2;
       const t = this.targets.get(keyOf({ color: this.color, i: c.move.token }))!;
-      ring.position.set(t.x, SURFACE_Y + 0.12, t.z);
+      ring.position.set(t.x, t.y + 0.05, t.z);
       ring.userData.ringFor = keyOf({ color: this.color, i: c.move.token });
       this.markers.add(ring);
     }
@@ -402,7 +413,7 @@ export class LudoScene extends Phaser.Scene {
     } else {
       for (let r = move.from + 1; r <= move.to; r++) {
         const [c, rr] = cellOf(color, r);
-        stops.push(new THREE.Vector3(wx(c), SURFACE_Y + 0.02, wz(rr)));
+        stops.push(new THREE.Vector3(wx(c), r === FINAL ? HOME_Y : SURFACE_Y + 0.02, wz(rr)));
       }
     }
     this.locked.add(keyOf(id));
@@ -419,11 +430,18 @@ export class LudoScene extends Phaser.Scene {
           update: (p: number) => {
             const e = easeInOut(p);
             pawn.position.set(a.x + (to.x - a.x) * e, a.y + (to.y - a.y) * e + Math.sin(p * Math.PI) * 0.42, a.z + (to.z - a.z) * e);
+            // Squash on landing: a little wider and shorter, then back to normal.
+            const q = p > 0.78 ? Math.sin(((p - 0.78) / 0.22) * Math.PI) : 0;
+            pawn.scale.set(PAWN_SCALE * (1 + 0.14 * q), PAWN_SCALE * (1 - 0.2 * q), PAWN_SCALE * (1 + 0.14 * q));
           },
         };
       }),
       () => {
-        if (move.to === FINAL) gameAudio.coin();
+        pawn.scale.setScalar(PAWN_SCALE);
+        if (move.to === FINAL) {
+          gameAudio.coin();
+          this.burst(pawn.position.clone().setY(HOME_Y + 0.5), COLOR_HEX[color]);
+        }
         finishMove();
       }
     );
@@ -443,6 +461,7 @@ export class LudoScene extends Phaser.Scene {
       }
       this.locked.add(keyOf(id));
       const start = pawn.position.clone();
+      this.pulseRing(start, COLOR_HEX[c.color]);
       this.queue.add(this.time.now, {
         dur: 650,
         update: (p) => {
@@ -458,6 +477,64 @@ export class LudoScene extends Phaser.Scene {
       });
     }
     if (remaining <= 0) done();
+  }
+
+  /** A burst of little coloured confetti pieces that fly up, fall and fade. */
+  private burst(at: THREE.Vector3, color: number): void {
+    const stage = this.stage;
+    if (!stage) return;
+    const geo = new THREE.SphereGeometry(0.07, 8, 6);
+    const palette = [color, 0xffffff, 0xfacc15, 0xff7ab8, 0x60a5fa];
+    const bits = Array.from({ length: 22 }, (_, i) => {
+      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: palette[i % palette.length], transparent: true }));
+      const a = Math.random() * Math.PI * 2;
+      const sp = 1.2 + Math.random() * 1.8;
+      m.position.copy(at);
+      stage.scene.add(m);
+      return { m, v: new THREE.Vector3(Math.cos(a) * sp, 2.6 + Math.random() * 2, Math.sin(a) * sp) };
+    });
+    this.queue.add(this.time.now, {
+      dur: 1100,
+      update: (p) => {
+        const t = p * 1.1;
+        for (const { m, v } of bits) {
+          m.position.set(at.x + v.x * t, at.y + v.y * t - 4.9 * t * t, at.z + v.z * t);
+          (m.material as THREE.MeshBasicMaterial).opacity = 1 - p;
+          m.scale.setScalar(1 - 0.5 * p);
+        }
+      },
+      done: () => {
+        for (const { m } of bits) {
+          stage.scene.remove(m);
+          (m.material as THREE.Material).dispose();
+        }
+        geo.dispose();
+      },
+    });
+  }
+
+  /** A ring that spreads out and fades where a token was captured. */
+  private pulseRing(at: THREE.Vector3, color: number): void {
+    const stage = this.stage;
+    if (!stage) return;
+    const geo = new THREE.TorusGeometry(0.5, 0.06, 10, 32);
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 });
+    const ring = new THREE.Mesh(geo, mat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.set(at.x, at.y + 0.08, at.z);
+    stage.scene.add(ring);
+    this.queue.add(this.time.now, {
+      dur: 520,
+      update: (p) => {
+        ring.scale.setScalar(0.5 + 1.9 * p);
+        mat.opacity = 0.9 * (1 - p);
+      },
+      done: () => {
+        stage.scene.remove(ring);
+        geo.dispose();
+        mat.dispose();
+      },
+    });
   }
 
   private afterMove(color: number): void {
@@ -518,6 +595,11 @@ export class LudoScene extends Phaser.Scene {
     if (stage) {
       this.queue.update(time);
       this.rig?.update();
+      if (this.turnRing) {
+        this.turnRing.visible = this.phase === "roll" || this.phase === "rolling" || this.phase === "choose";
+        const sc = 1 + Math.sin(time / 200) * 0.12;
+        this.turnRing.scale.set(sc, sc, 1);
+      }
       this.dice?.update(time);
 
       // Tokens glide to where they belong, and movable ones bob.
