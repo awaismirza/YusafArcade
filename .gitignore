@@ -63,4 +63,7 @@ ehthumbs.db
 test-results/
 playwright-report/
 blob-report/
-playwright/.cache/dist-test/
+playwright/.cache/
+
+# Compiled test bundles
+dist-test/
