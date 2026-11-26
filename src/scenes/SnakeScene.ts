@@ -1,5 +1,8 @@
 import Phaser from "phaser";
 import { FONT } from "../ui/theme";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch } from "../input/touchPad";
@@ -24,7 +27,7 @@ export class SnakeScene extends Phaser.Scene {
   private started = false;
   private dead = false;
   private lockUntil = 0;
-  private scoreText!: Phaser.GameObjects.Text;
+  private scoreText!: Chip;
   private hint!: Phaser.GameObjects.Text;
   private hideMenu!: () => void;
   private swipeStart: Phaser.Math.Vector2 | null = null;
@@ -55,21 +58,20 @@ export class SnakeScene extends Phaser.Scene {
   create(): void {
     setTouchChrome("hidden");
     this.cameras.main.setBackgroundColor(0x052e16);
+    setGradientBackground(this, PALETTES.snake);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
     const board = this.add.graphics().setDepth(0);
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
-        board.fillStyle((x + y) % 2 === 0 ? 0x14532d : 0x166534, 1);
+        board.fillStyle((x + y) % 2 === 0 ? 0x1f6f3d : 0x2a8449, 1);
         board.fillRect(x * CELL, OY + y * CELL, CELL, CELL);
       }
     }
     this.gfx = this.add.graphics().setDepth(5);
 
-    this.scoreText = this.add
-      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: FONT, fontSize: "40px", color: "#ffffff", fontStyle: "700" })
-      .setOrigin(0.5)
-      .setDepth(50);
+    this.scoreText = addChip(this, GAME_WIDTH / 2, 30, { icon: "🍎", width: 130, depth: 50 });
+    this.scoreText.setText("0");
     this.hint = this.add
       .text(GAME_WIDTH / 2, OY + (ROWS * CELL) / 2 + 60, deviceUsesTouch() ? "Use the arrow buttons (or swipe) to steer" : "Arrow keys / WASD or the arrow buttons to steer", {
         fontFamily: FONT,

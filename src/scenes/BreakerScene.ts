@@ -1,12 +1,17 @@
 import Phaser from "phaser";
 import { FONT } from "../ui/theme";
+import { drawGlass } from "../ui/glass";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
+import { RoundTile } from "../ui/roundTile";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch } from "../input/touchPad";
 import { setTouchChrome } from "../input/touchChrome";
 import { addMenuButton, overMenuButton, pollEndTaps, resetTaps, showGameOver } from "../ui/arcadeKit";
 
-type Brick = { rect: Phaser.GameObjects.Rectangle; hp: number };
+type Brick = { rect: RoundTile; hp: number };
 type Ball = { circle: Phaser.GameObjects.Arc; vx: number; vy: number };
 type Drop = { sprite: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text; kind: "wide" | "multi" };
 
@@ -20,7 +25,7 @@ const BALL_R = 8;
 const ROW_COLORS = [0xef4444, 0xf97316, 0xeab308, 0x22c55e, 0x06b6d4, 0x6366f1, 0xa855f7, 0xec4899];
 
 export class BreakerScene extends Phaser.Scene {
-  private paddle!: Phaser.GameObjects.Rectangle;
+  private paddle!: RoundTile;
   private paddleW = 120;
   private wideUntil = 0;
   private bricks: Brick[] = [];
@@ -32,8 +37,8 @@ export class BreakerScene extends Phaser.Scene {
   private level = 1;
   private dead = false;
   private lockUntil = 0;
-  private scoreText!: Phaser.GameObjects.Text;
-  private livesText!: Phaser.GameObjects.Text;
+  private scoreText!: Chip;
+  private livesText!: Chip;
   private hint!: Phaser.GameObjects.Text;
   private hideMenu!: () => void;
   private keys!: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -64,18 +69,13 @@ export class BreakerScene extends Phaser.Scene {
   create(): void {
     setTouchChrome("hidden");
     this.cameras.main.setBackgroundColor(0x0f172a);
+    setGradientBackground(this, PALETTES.breaker);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.paddle = this.add.rectangle(GAME_WIDTH / 2, PADDLE_Y, this.paddleW, 14, 0xe2e8f0).setStrokeStyle(2, 0x38bdf8).setDepth(10);
+    this.paddle = new RoundTile(this, GAME_WIDTH / 2, PADDLE_Y, this.paddleW, 14, 0xe2e8f0, { radius: 7 }).setDepth(10);
 
-    this.scoreText = this.add
-      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: FONT, fontSize: "36px", color: "#ffffff", fontStyle: "700" })
-      .setOrigin(0.5)
-      .setDepth(50);
-    this.livesText = this.add
-      .text(GAME_WIDTH - 20, 24, "", { fontFamily: FONT, fontSize: "26px", color: "#f87171" })
-      .setOrigin(1, 0.5)
-      .setDepth(50);
+    this.scoreText = addChip(this, GAME_WIDTH / 2, 34, { icon: "⭐", width: 150, depth: 50 });
+    this.livesText = addChip(this, GAME_WIDTH - 110, 34, { width: 170, depth: 50 });
     this.hint = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 70, deviceUsesTouch() ? "Hold ◀ ▶ to glide · tap to launch" : "Mouse / arrows to move · click or SPACE to launch", {
         fontFamily: FONT,
@@ -111,11 +111,13 @@ export class BreakerScene extends Phaser.Scene {
   /** Big hold-to-move pad in a bottom corner. Works with touch and mouse. */
   private makeMoveButton(x: number, label: string, set: (down: boolean) => void): void {
     const y = GAME_HEIGHT - 44;
-    const bg = this.add
-      .rectangle(x, y, 170, 70, 0xffffff, 0.14)
-      .setStrokeStyle(2, 0xffffff, 0.35)
-      .setDepth(40)
-      .setInteractive();
+    const g = this.add.graphics().setDepth(40);
+    const paint = (down: boolean): void => {
+      g.clear();
+      drawGlass(g, x, y, 170, 70, { tint: 0xffffff, alpha: down ? 0.38 : 0.16, radius: 26 });
+    };
+    paint(false);
+    const bg = this.add.rectangle(x, y, 170, 70, 0xffffff, 0.001).setDepth(42).setInteractive();
     this.add
       .text(x, y, label, { fontFamily: FONT, fontSize: "34px", color: "#ffffff" })
       .setOrigin(0.5)
@@ -123,11 +125,11 @@ export class BreakerScene extends Phaser.Scene {
       .setDepth(41);
     const on = (): void => {
       set(true);
-      bg.setFillStyle(0xffffff, 0.3);
+      paint(true);
     };
     const off = (): void => {
       set(false);
-      bg.setFillStyle(0xffffff, 0.14);
+      paint(false);
     };
     bg.on("pointerdown", on);
     bg.on("pointerup", off);
@@ -143,10 +145,7 @@ export class BreakerScene extends Phaser.Scene {
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < COLS; c++) {
         const tough = this.level >= 3 && r < 2;
-        const rect = this.add
-          .rectangle(startX + c * (BRICK_W + GAP), TOP + r * (BRICK_H + GAP), BRICK_W, BRICK_H, ROW_COLORS[r % ROW_COLORS.length])
-          .setStrokeStyle(tough ? 3 : 1, tough ? 0xffffff : 0x000000, tough ? 0.9 : 0.25)
-          .setDepth(5);
+        const rect = new RoundTile(this, startX + c * (BRICK_W + GAP), TOP + r * (BRICK_H + GAP), BRICK_W, BRICK_H, tough ? 0x475569 : ROW_COLORS[r % ROW_COLORS.length], { radius: 7 }).setDepth(5);
         this.bricks.push({ rect, hp: tough ? 2 : 1 });
       }
     }
@@ -181,12 +180,12 @@ export class BreakerScene extends Phaser.Scene {
 
   private syncHud(): void {
     this.scoreText.setText(`${this.score}`);
-    this.livesText.setText(`L${this.level}  ` + "♥".repeat(Math.max(0, this.lives)));
+    this.livesText.setText(`L${this.level}  ` + "❤️".repeat(Math.max(0, this.lives)));
   }
 
   private setPaddleWidth(w: number): void {
     this.paddleW = w;
-    this.paddle.setSize(w, 14);
+    this.paddle.setTileSize(w, 14, 0xe2e8f0);
   }
 
   private spawnDrop(x: number, y: number): void {

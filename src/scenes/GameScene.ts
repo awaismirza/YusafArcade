@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { FONT } from "../ui/theme";
+import { addChip, Chip } from "../ui/chips";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch, touchPad } from "../input/touchPad";
 import { setTouchChrome } from "../input/touchChrome";
@@ -43,9 +44,9 @@ export class GameScene extends Phaser.Scene {
   private birds: Mover[] = [];
   private villagers: Mover[] = [];
   private decorTrees: Phaser.GameObjects.Sprite[] = [];
-  private distanceText!: Phaser.GameObjects.Text;
-  private coinText!: Phaser.GameObjects.Text;
-  private stageText!: Phaser.GameObjects.Text;
+  private distanceText!: Chip;
+  private coinText!: Chip;
+  private stageText!: Chip;
   private shadow!: Phaser.GameObjects.Ellipse;
   private shootingUntil = 0;
   private jumpHint!: Phaser.GameObjects.Text;
@@ -212,31 +213,12 @@ export class GameScene extends Phaser.Scene {
     });
     this.nextSpawnX = PLAYER_RUN_X + 520;
 
-    this.distanceText = this.add
-      .text(20, 16, "0 m", {
-        fontFamily: FONT,
-        fontSize: "22px",
-        color: "#0f172a",
-        fontStyle: "bold",
-      })
-      .setScrollFactor(0)
-      .setDepth(50);
-    this.coinText = this.add
-      .text(20, 44, "Coins 0", {
-        fontFamily: FONT,
-        fontSize: "16px",
-        color: "#854d0e",
-      })
-      .setScrollFactor(0)
-      .setDepth(50);
-    this.stageText = this.add
-      .text(20, 68, "Level 1  ·  reach 500 m", {
-        fontFamily: FONT,
-        fontSize: "16px",
-        color: "#7f1d1d",
-      })
-      .setScrollFactor(0)
-      .setDepth(50);
+    this.distanceText = addChip(this, GAME_WIDTH / 2, 34, { icon: "🏃", width: 130, depth: 50 });
+    this.distanceText.setText("0 m");
+    this.coinText = addChip(this, GAME_WIDTH - 100, 34, { icon: "🪙", width: 150, depth: 50 });
+    this.coinText.setText("Coins 0");
+    this.stageText = addChip(this, GAME_WIDTH / 2, 80, { width: 250, depth: 50 });
+    this.stageText.setText("Level 1  ·  reach 500 m");
 
     this.startHint = this.add
       .text(GAME_WIDTH / 2, 150, deviceUsesTouch() ? "Tap Shoot to run" : "Press SPACE to run", {
@@ -404,9 +386,8 @@ export class GameScene extends Phaser.Scene {
     this.player.anims.stop();
     this.player.setTexture("kit-idle", 0);
 
-    this.distanceText.setColor("#fff7ed").setText("0 m");
-    this.coinText.setColor("#ffedd5");
-    this.stageText.setColor("#fff7ed").setText(`Level ${stage}  ·  HP 3`);
+    this.distanceText.setText("0 m");
+    this.stageText.setText(`Level ${stage}  ·  HP 3`);
     this.startHint.setVisible(true).setText(deviceUsesTouch() ? "Tap Shoot" : "SPACE shoots").setColor("#fff7ed");
     this.jumpHint
       .setText(deviceUsesTouch() ? "Jump  ·  Duck  ·  Sword" : "W or ↑ jump   ·   ↓ duck   ·   ⌘ sword")

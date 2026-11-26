@@ -29,6 +29,14 @@ export class RoundTile extends Phaser.GameObjects.Container {
     return this;
   }
 
+  /** Resize and repaint (used for the Breaker paddle power-up). */
+  setTileSize(w: number, h: number, color: number): this {
+    this.tw = w;
+    this.th = h;
+    this.setSize(w, h);
+    return this.setFillStyle(color);
+  }
+
   /** Kept so scenes written for Rectangle still compile; tiles draw their own edge. */
   setStrokeStyle(..._args: unknown[]): this {
     return this;
