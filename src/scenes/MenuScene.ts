@@ -37,6 +37,7 @@ const PUZZLES: Entry[] = [
   ["Slide Puzzle 🧩", "Put the tiles in order", 0xb45309, "Slide"],
   ["Mini Sudoku 🔢", "4×4 and 6×6 number logic", 0x1e40af, "Sudoku"],
   ["Code the Robot 🤖", "Program the robot's route", 0x0d9488, "Robot"],
+  ["Checkers ⚫", "Jump to capture · crown a king", 0x3f6212, "Checkers"],
 ];
 
 const TABS: { name: string; note: string; games: Entry[] }[] = [
