@@ -1,4 +1,8 @@
+import "@fontsource/nunito/latin-600.css";
+import "@fontsource/nunito/latin-700.css";
+import "@fontsource/nunito/latin-800.css";
 import Phaser from "phaser";
+import { withTimeout } from "./ui/gestureMath";
 import { GAME_HEIGHT, GAME_WIDTH, PHYSICS } from "./config";
 import { gameAudio } from "./audio/sfx";
 import { deviceUsesTouch, touchPad } from "./input/touchPad";
@@ -56,6 +60,13 @@ const config: Phaser.Types.Core.GameConfig = {
   },
   scene: [BootScene, MenuScene, GameScene, GameOverScene, FlappyScene, DodgerScene, BreakerScene, StackScene, SnakeScene, WhackScene, MemoryScene, CatchScene, MathScene, WordScene, PatternScene, QuizScene, ClockScene, ShapesScene, WorldScene, OddScene, FractionsScene, OperatorScene, SimonScene, SlideScene, SudokuScene, RobotScene, SolarScene, CheckersScene, ChessScene, LudoScene, SnakesScene],
 };
+
+// Load the bundled font before the first scene draws text. If it is slow or fails, start anyway with the fallback font.
+await withTimeout(
+  Promise.all([document.fonts.load("600 16px Nunito"), document.fonts.load("700 16px Nunito"), document.fonts.load("800 16px Nunito")]).then(() => undefined),
+  1500,
+  undefined
+);
 
 const game = new Phaser.Game(config);
 
