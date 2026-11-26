@@ -67,3 +67,6 @@ playwright/.cache/
 
 # Compiled test bundles
 dist-test/
+
+# Agent working notes
+.superpowers/
