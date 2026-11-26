@@ -6,6 +6,7 @@ import { addMenuButton, pollEndTaps, resetTaps, showGameOver, showModePicker } f
 import { AnimQueue, easeInOut } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { findUserData, ThreeStage } from "../ui/threeStage";
+import { addBoardControls } from "../ui/boardControls";
 import { BoardCamera, buildBoard8, cellX, cellZ, Markers8, TOP_Y } from "../games/shared/board8";
 import { chooseMove, Level } from "../games/chess/ai";
 import { applyMove, Color, inCheck, legalMoves, Move, outcome, Position, positionKey, squareName, startPosition } from "../games/chess/rules";
@@ -86,7 +87,6 @@ export class ChessScene extends Phaser.Scene {
 
     this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.85, backdrop: ["#33407a", "#0b0f24"] });
     this.hud = new Hud(this);
-    this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.onPointer(pointer));
 
     if (!this.stage) {
       this.hud.setStatus("3D needs WebGL");
@@ -126,13 +126,14 @@ export class ChessScene extends Phaser.Scene {
     stage.scene.add(group, this.markers.group, this.pieceGroup);
     this.mats = makeChessMaterials();
     this.camCtl = new BoardCamera(stage.camera, 9.8, 11.2, 0.5);
+    addBoardControls(this, this.camCtl.rig, (x, y) => this.onTap(x, y));
   }
 
   /** Converts a tap in game coordinates to a board square, if any. */
-  private onPointer(pointer: Phaser.Input.Pointer): void {
+  private onTap(x: number, y: number): void {
     const stage = this.stage;
     if (!stage || this.dead || this.time.now < this.readyAt) return;
-    const hit = stage.pick(pointer.x, pointer.y, [...this.squares, ...this.pieces.values()]);
+    const hit = stage.pick(x, y, [...this.squares, ...this.pieces.values()]);
     if (!hit) return;
     const sq = findUserData<number>(hit.object, "square") ?? findUserData<number>(hit.object, "pieceSquare");
     if (sq !== undefined) this.onSquare(sq);

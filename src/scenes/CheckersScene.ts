@@ -6,6 +6,7 @@ import { addMenuButton, pollEndTaps, resetTaps, showGameOver, showModePicker } f
 import { AnimQueue, easeInOut, easeOutBack } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { findUserData, ThreeStage } from "../ui/threeStage";
+import { addBoardControls } from "../ui/boardControls";
 import { BoardCamera, buildBoard8, cellX, cellZ, Markers8, TOP_Y } from "../games/shared/board8";
 import { applyMove, Board, chooseMove, countPieces, crowns, legalMoves, Level, Move, other, Piece, QUIET_LIMIT, Side, startBoard, BLACK, WHITE } from "../games/checkers/rules";
 
@@ -94,7 +95,6 @@ export class CheckersScene extends Phaser.Scene {
 
     this.stage = ThreeStage.create(this, { key: TEX_KEY, backdrop: ["#14532d", "#052e16"] });
     this.hud = new Hud(this);
-    this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.onPointer(pointer));
 
     if (!this.stage) {
       this.hud.setStatus("3D needs WebGL");
@@ -138,6 +138,7 @@ export class CheckersScene extends Phaser.Scene {
     };
     this.discGeo = new THREE.LatheGeometry(DISC.map(([x, y]) => new THREE.Vector2(x, y)), 48);
     this.camCtl = new BoardCamera(stage.camera);
+    addBoardControls(this, this.camCtl.rig, (x, y) => this.onTap(x, y));
   }
 
   /** Builds one piece: a disc, or two stacked discs with a gold ring for a king. */
@@ -163,10 +164,10 @@ export class CheckersScene extends Phaser.Scene {
     return g;
   }
 
-  private onPointer(pointer: Phaser.Input.Pointer): void {
+  private onTap(x: number, y: number): void {
     const stage = this.stage;
     if (!stage || this.dead || this.time.now < this.readyAt) return;
-    const hit = stage.pick(pointer.x, pointer.y, [...this.squares, ...this.pieces.values()]);
+    const hit = stage.pick(x, y, [...this.squares, ...this.pieces.values()]);
     if (!hit) return;
     const sq = findUserData<number>(hit.object, "square") ?? findUserData<number>(hit.object, "pieceSquare");
     if (sq !== undefined) this.onSquare(sq >> 3, sq & 7);

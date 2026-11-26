@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitRig } from "./orbitRig";
 
 /** World coordinates for an 8×8 board centred on the origin. Row 0 is far from the near player, column 0 is on the left. */
 export const cellX = (col: number): number => col - 3.5;
@@ -76,27 +77,37 @@ export class Markers8 {
 }
 
 /**
- * Camera that fills the screen with the board and, in pass-and-play, glides round to the other side so the
- * player about to move sees their own pieces at the bottom.
+ * Camera that fills the screen with the board and, in pass-and-play, glides round to the other side so the player about
+ * to move sees their own pieces at the bottom. Built on OrbitRig, so players can also pinch, twist, tilt and pick views;
+ * their chosen angle is kept relative to whoever's seat the camera is at.
  */
 export class BoardCamera {
-  flipped = false;
-  private readonly goal = new THREE.Vector3();
+  readonly rig: OrbitRig;
+  private readonly target: THREE.Vector3;
+  private seatFlipped = false;
 
-  constructor(
-    private readonly camera: THREE.PerspectiveCamera,
-    private readonly height = 11.4,
-    private readonly dist = 9.4,
-    /** Height of the point the camera looks at. Raise it to move the board down the screen. */
-    private readonly lookY = 0
-  ) {
-    this.camera.position.set(0, height, dist);
-    this.camera.lookAt(0, lookY, 0.35);
+  constructor(camera: THREE.PerspectiveCamera, height = 11.4, dist = 9.4, lookY = 0) {
+    this.target = new THREE.Vector3(0, lookY, 0.35);
+    const dy = height - lookY;
+    const dz = dist - 0.35;
+    this.rig = new OrbitRig(camera, {
+      target: this.target,
+      distance: Math.hypot(dy, dz),
+      elevationDeg: (Math.atan2(dy, dz) * 180) / Math.PI,
+    });
+  }
+
+  get flipped(): boolean {
+    return this.seatFlipped;
+  }
+  set flipped(v: boolean) {
+    this.seatFlipped = v;
+    this.rig.setBaseYaw(v ? Math.PI : 0);
   }
 
   update(): void {
-    this.goal.set(0, this.height, this.flipped ? -this.dist : this.dist);
-    this.camera.position.lerp(this.goal, 0.09);
-    this.camera.lookAt(0, this.lookY, this.flipped ? -0.35 : 0.35);
+    // Keep the board centred from either seat: the look-at point mirrors when the camera is on the far side.
+    this.target.z += ((this.seatFlipped ? -0.35 : 0.35) - this.target.z) * 0.12;
+    this.rig.update();
   }
 }

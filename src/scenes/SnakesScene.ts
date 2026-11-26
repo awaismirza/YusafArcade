@@ -6,6 +6,8 @@ import { addMenuButton, Btn, makeButton, pollEndTaps, resetTaps, showGameOver, s
 import { AnimQueue, easeInOut } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { ThreeStage } from "../ui/threeStage";
+import { addBoardControls } from "../ui/boardControls";
+import { OrbitRig } from "../games/shared/orbitRig";
 import { DiceSet } from "../games/shared/dice3d";
 import { buildPawn } from "../games/shared/pawn3d";
 import { buildSnakesBoard, SnakesBoard, squareWorld, startSpot } from "../games/snakes/board3d";
@@ -38,6 +40,7 @@ export class SnakesScene extends Phaser.Scene {
   private pawns: THREE.Group[] = [];
   private targets: THREE.Vector3[] = [];
   private locked = new Set<number>();
+  private rig: OrbitRig | null = null;
   private hud!: Hud;
   private rollBtn: Btn | null = null;
   private hideMenu!: () => void;
@@ -65,6 +68,7 @@ export class SnakesScene extends Phaser.Scene {
     this.targets = [];
     this.locked = new Set();
     this.rollBtn = null;
+    this.rig = null;
     resetTaps();
   }
 
@@ -123,8 +127,8 @@ export class SnakesScene extends Phaser.Scene {
   private buildWorld(stage: ThreeStage): void {
     this.board = buildSnakesBoard();
     stage.scene.add(this.board.group);
-    stage.camera.position.set(0, 15.2, 9.6);
-    stage.camera.lookAt(0, 0, 0.5);
+    this.rig = new OrbitRig(stage.camera, { target: new THREE.Vector3(0, 0, 0.5), distance: 17.7, elevationDeg: 59.1 });
+    addBoardControls(this, this.rig, () => undefined);
     stage.keyLight.position.set(5, 16, 7);
     stage.keyLight.shadow.camera.left = -9;
     stage.keyLight.shadow.camera.right = 9;
@@ -365,6 +369,7 @@ export class SnakesScene extends Phaser.Scene {
     const stage = this.stage;
     if (stage) {
       this.queue.update(time);
+      this.rig?.update();
       this.dice?.update(time);
       this.pawns.forEach((g, seat) => {
         if (this.locked.has(seat)) return;

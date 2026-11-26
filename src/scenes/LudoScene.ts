@@ -6,6 +6,8 @@ import { addMenuButton, Btn, makeButton, pollEndTaps, resetTaps, showGameOver, s
 import { AnimQueue, easeInOut } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { findUserData, ThreeStage } from "../ui/threeStage";
+import { addBoardControls } from "../ui/boardControls";
+import { OrbitRig } from "../games/shared/orbitRig";
 import { DiceSet } from "../games/shared/dice3d";
 import { buildPawn } from "../games/shared/pawn3d";
 import { buildLudoBoard, SURFACE_Y, wx, wz } from "../games/ludo/board3d";
@@ -44,6 +46,7 @@ export class LudoScene extends Phaser.Scene {
   private locked = new Set<string>();
   private markers = new THREE.Group();
   private movableKeys = new Set<string>();
+  private rig: OrbitRig | null = null;
   private hud!: Hud;
   private rollBtn: Btn | null = null;
   private hideMenu!: () => void;
@@ -74,6 +77,7 @@ export class LudoScene extends Phaser.Scene {
     this.markers = new THREE.Group();
     this.movableKeys = new Set();
     this.rollBtn = null;
+    this.rig = null;
     resetTaps();
   }
 
@@ -92,7 +96,6 @@ export class LudoScene extends Phaser.Scene {
 
     this.stage = ThreeStage.create(this, { key: TEX_KEY, backdrop: ["#7c2d12", "#431407"] });
     this.hud = new Hud(this);
-    this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.onPointer(pointer));
 
     if (!this.stage) {
       this.hud.setStatus("3D needs WebGL");
@@ -134,8 +137,8 @@ export class LudoScene extends Phaser.Scene {
 
   private buildWorld(stage: ThreeStage): void {
     stage.scene.add(buildLudoBoard(), this.markers);
-    stage.camera.position.set(0, 21.5, 12.5);
-    stage.camera.lookAt(0, 0, 0.9);
+    this.rig = new OrbitRig(stage.camera, { target: new THREE.Vector3(0, 0, 0.9), distance: 24.4, elevationDeg: 61.6 });
+    addBoardControls(this, this.rig, (x, y) => this.onTap(x, y));
     stage.keyLight.position.set(5, 18, 8);
     stage.keyLight.shadow.camera.left = -12;
     stage.keyLight.shadow.camera.right = 12;
@@ -338,12 +341,12 @@ export class LudoScene extends Phaser.Scene {
     this.movableKeys.clear();
   }
 
-  private onPointer(pointer: Phaser.Input.Pointer): void {
+  private onTap(x: number, y: number): void {
     const stage = this.stage;
     if (!stage || this.phase !== "choose" || this.time.now < this.readyAt) return;
     const targets: THREE.Object3D[] = [...this.pawns.values()];
     if (this.dice) targets.push(...this.dice.meshes);
-    const hit = stage.pick(pointer.x, pointer.y, targets);
+    const hit = stage.pick(x, y, targets);
     if (!hit) return;
 
     const die = findUserData<number>(hit.object, "die");
@@ -514,6 +517,7 @@ export class LudoScene extends Phaser.Scene {
     const stage = this.stage;
     if (stage) {
       this.queue.update(time);
+      this.rig?.update();
       this.dice?.update(time);
 
       // Tokens glide to where they belong, and movable ones bob.
