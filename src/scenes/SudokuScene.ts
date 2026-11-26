@@ -1,4 +1,8 @@
 import Phaser from "phaser";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
+import { RoundTile } from "../ui/roundTile";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -14,12 +18,12 @@ export class SudokuScene extends Phaser.Scene {
   private cur: number[][] = [];
   private given: boolean[][] = [];
   private sel: [number, number] | null = null;
-  private cellRects: Phaser.GameObjects.Rectangle[][] = [];
+  private cellRects: RoundTile[][] = [];
   private cellTexts: Phaser.GameObjects.Text[][] = [];
   private startTime = 0;
   private dead = false;
   private lockUntil = 0;
-  private info!: Phaser.GameObjects.Text;
+  private info!: Chip;
   private hint!: Phaser.GameObjects.Text;
   private hideMenu!: () => void;
 
@@ -40,10 +44,11 @@ export class SudokuScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x172554);
+    setGradientBackground(this, PALETTES.sudoku);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.info = this.add.text(GAME_WIDTH / 2, 30, "0s", { fontFamily: FONT, fontSize: "26px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
+    this.info = addChip(this, GAME_WIDTH / 2, 34, { icon: "⏱", width: 130 });
+    this.info.setText("0s");
     this.hint = this.add.text(GAME_WIDTH / 2, 70, "", { fontFamily: FONT, fontSize: "19px", color: "#bfdbfe" }).setOrigin(0.5);
 
     this.hideMenu = addMenuButton(this, () => {
@@ -129,9 +134,7 @@ export class SudokuScene extends Phaser.Scene {
       for (let c = 0; c < n; c++) {
         const x = this.left + c * this.cs + this.cs / 2;
         const y = this.top + r * this.cs + this.cs / 2;
-        const rect = this.add
-          .rectangle(x, y, this.cs - 2, this.cs - 2, 0xffffff)
-          .setInteractive({ useHandCursor: true });
+        const rect = new RoundTile(this, x, y, this.cs - 3, this.cs - 3, 0xffffff, { raised: false, radius: 10 }).setInteractive({ useHandCursor: true });
         rect.on("pointerdown", () => {
           if (this.given[r][c] || this.dead) return;
           this.sel = [r, c];

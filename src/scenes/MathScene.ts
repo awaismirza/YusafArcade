@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -85,11 +88,11 @@ export class MathScene extends Phaser.Scene {
   private lockUntil = 0;
   private board!: ChoiceBoard;
   private qText!: Phaser.GameObjects.Text;
-  private scoreText!: Phaser.GameObjects.Text;
-  private livesText!: Phaser.GameObjects.Text;
-  private levelText!: Phaser.GameObjects.Text;
+  private scoreText!: Chip;
+  private livesText!: Chip;
+  private levelText!: Chip;
   private msgText!: Phaser.GameObjects.Text;
-  private bestText!: Phaser.GameObjects.Text;
+  private bestText!: Chip;
   private bar!: Phaser.GameObjects.Rectangle;
   private rocket!: Phaser.GameObjects.Text;
   private hideMenu!: () => void;
@@ -113,7 +116,7 @@ export class MathScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x0b1020);
+    setGradientBackground(this, PALETTES.math);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
     for (let i = 0; i < 60; i++) {
@@ -124,10 +127,13 @@ export class MathScene extends Phaser.Scene {
     this.add.text(TRACK_X1 + 28, TRACK_Y, "🌕", { fontFamily: FONT, fontSize: "36px" }).setOrigin(0.5);
     this.rocket = this.add.text(TRACK_X0, TRACK_Y, "🚀", { fontFamily: FONT, fontSize: "40px" }).setOrigin(0.5).setAngle(45).setDepth(5);
 
-    this.scoreText = this.add.text(GAME_WIDTH / 2, 28, "Score 0", { fontFamily: FONT, fontSize: "26px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
-    this.bestText = this.add.text(GAME_WIDTH / 2, 58, `🏆 Best ${getBest("math")}`, { fontFamily: FONT, fontSize: "18px", color: "#fde047", fontStyle: "700" }).setOrigin(0.5);
-    this.levelText = this.add.text(GAME_WIDTH - 20, 24, "Level 1", { fontFamily: FONT, fontSize: "22px", color: "#fde047", fontStyle: "700" }).setOrigin(1, 0.5);
-    this.livesText = this.add.text(GAME_WIDTH - 20, 52, "", { fontFamily: FONT, fontSize: "22px", color: "#ef4444" }).setOrigin(1, 0.5);
+    this.scoreText = addChip(this, GAME_WIDTH / 2, 34, { icon: "⭐", width: 170 });
+    this.scoreText.setText("Score 0");
+    this.bestText = addChip(this, 250, 34, { width: 150 });
+    this.bestText.setText(`🏆 Best ${getBest("math")}`);
+    this.levelText = addChip(this, GAME_WIDTH - 100, 34, { width: 140 });
+    this.levelText.setText("Level 1");
+    this.livesText = addChip(this, GAME_WIDTH - 100, 80, { width: 140 });
     this.add.rectangle(GAME_WIDTH / 2, 88, 600, 12, 0x1e293b).setDepth(2);
     this.bar = this.add.rectangle(GAME_WIDTH / 2 - 300, 88, 600, 12, 0x22c55e).setOrigin(0, 0.5).setDepth(3);
     this.qText = this.add.text(GAME_WIDTH / 2, 170, "", { fontFamily: FONT, fontSize: "64px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);

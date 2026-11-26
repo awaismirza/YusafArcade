@@ -1,4 +1,8 @@
 import Phaser from "phaser";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
+import { RoundTile } from "../ui/roundTile";
 import { FONT } from "../ui/theme";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
@@ -10,7 +14,7 @@ const CW = 130;
 const CH = 100;
 
 type Card = {
-  rect: Phaser.GameObjects.Rectangle;
+  rect: RoundTile;
   label: Phaser.GameObjects.Text;
   sym: string;
   up: boolean;
@@ -27,8 +31,8 @@ export class MemoryScene extends Phaser.Scene {
   private started = false;
   private dead = false;
   private lockUntil = 0;
-  private movesText!: Phaser.GameObjects.Text;
-  private timeText!: Phaser.GameObjects.Text;
+  private movesText!: Chip;
+  private timeText!: Chip;
   private hideMenu!: () => void;
 
   constructor() {
@@ -50,17 +54,13 @@ export class MemoryScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x1e293b);
+    setGradientBackground(this, PALETTES.memory);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.movesText = this.add
-      .text(GAME_WIDTH / 2, 30, "Moves 0", { fontFamily: FONT, fontSize: "30px", color: "#ffffff", fontStyle: "700" })
-      .setOrigin(0.5)
-      .setDepth(50);
-    this.timeText = this.add
-      .text(GAME_WIDTH - 20, 30, "0s", { fontFamily: FONT, fontSize: "26px", color: "#fde047", fontStyle: "700" })
-      .setOrigin(1, 0.5)
-      .setDepth(50);
+    this.movesText = addChip(this, GAME_WIDTH / 2, 34, { width: 170 });
+    this.movesText.setText("Moves 0");
+    this.timeText = addChip(this, GAME_WIDTH - 100, 34, { icon: "⏱", width: 120 });
+    this.timeText.setText("0s");
 
     this.hideMenu = addMenuButton(this, () => {
       if (!this.dead) this.scene.start("Menu");
@@ -71,10 +71,8 @@ export class MemoryScene extends Phaser.Scene {
       const col = i % 4;
       const row = Math.floor(i / 4);
       const x = GAME_WIDTH / 2 + (col - 1.5) * (CW + 16);
-      const y = 150 + row * (CH + 14);
-      const rect = this.add
-        .rectangle(x, y, CW, CH, 0x6366f1)
-        .setStrokeStyle(3, 0xffffff, 0.35)
+      const y = 138 + row * (CH + 10);
+      const rect = new RoundTile(this, x, y, CW, CH, 0x6366f1)
         .setDepth(5)
         .setInteractive({ useHandCursor: true });
       const label = this.add

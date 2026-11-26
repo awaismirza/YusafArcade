@@ -1,4 +1,8 @@
 import Phaser from "phaser";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
+import { RoundTile } from "../ui/roundTile";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -14,7 +18,7 @@ export class SlideScene extends Phaser.Scene {
   private started = false;
   private dead = false;
   private lockUntil = 0;
-  private info!: Phaser.GameObjects.Text;
+  private info!: Chip;
   private hint!: Phaser.GameObjects.Text;
   private hideMenu!: () => void;
 
@@ -34,10 +38,11 @@ export class SlideScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x422006);
+    setGradientBackground(this, PALETTES.slide);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.info = this.add.text(GAME_WIDTH / 2, 30, "Moves 0 · 0s", { fontFamily: FONT, fontSize: "26px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
+    this.info = addChip(this, GAME_WIDTH / 2, 34, { width: 240 });
+    this.info.setText("Moves 0 · 0s");
     this.hint = this.add.text(GAME_WIDTH / 2, 76, "", { fontFamily: FONT, fontSize: "20px", color: "#fed7aa" }).setOrigin(0.5);
 
     this.hideMenu = addMenuButton(this, () => {
@@ -106,10 +111,7 @@ export class SlideScene extends Phaser.Scene {
         const v = this.grid[r][c];
         if (v === 0) continue;
         const { x, y } = this.pos(r, c);
-        const rect = this.add
-          .rectangle(0, 0, this.size - 8, this.size - 8, 0xf59e0b)
-          .setStrokeStyle(3, 0xffffff, 0.5)
-          .setInteractive({ useHandCursor: true });
+        const rect = new RoundTile(this, 0, 0, this.size - 8, this.size - 8, 0xf59e0b).setInteractive({ useHandCursor: true });
         const text = this.add
           .text(0, 0, String(v), { fontFamily: FONT, fontSize: `${Math.round(this.size * 0.42)}px`, color: "#451a03", fontStyle: "700" })
           .setOrigin(0.5);
@@ -145,7 +147,7 @@ export class SlideScene extends Phaser.Scene {
     this.tiles.forEach((box, v) => {
       const [r, c] = this.find(v);
       const right = v === r * this.n + c + 1;
-      (box.list[0] as Phaser.GameObjects.Rectangle).setFillStyle(right ? 0x4ade80 : 0xf59e0b);
+      (box.list[0] as RoundTile).setFillStyle(right ? 0x4ade80 : 0xf59e0b);
     });
   }
 

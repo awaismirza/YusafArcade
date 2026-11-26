@@ -1,4 +1,8 @@
 import Phaser from "phaser";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
+import { RoundTile } from "../ui/roundTile";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -21,10 +25,10 @@ export class SimonScene extends Phaser.Scene {
   private speed = 650;
   private dead = false;
   private lockUntil = 0;
-  private pads: Phaser.GameObjects.Rectangle[] = [];
+  private pads: RoundTile[] = [];
   private status!: Phaser.GameObjects.Text;
-  private scoreText!: Phaser.GameObjects.Text;
-  private livesText!: Phaser.GameObjects.Text;
+  private scoreText!: Chip;
+  private livesText!: Chip;
   private hideMenu!: () => void;
 
   constructor() {
@@ -43,18 +47,19 @@ export class SimonScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x1e1b4b);
+    setGradientBackground(this, PALETTES.simon);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.scoreText = this.add.text(GAME_WIDTH / 2, 30, "Round 0", { fontFamily: FONT, fontSize: "28px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
-    this.add.text(GAME_WIDTH - 20, 50, `🏆 Best ${getBest("simon")}`, { fontFamily: FONT, fontSize: "15px", color: "#fde68a" }).setOrigin(1, 0.5);
-    this.livesText = this.add.text(GAME_WIDTH - 20, 24, "", { fontFamily: FONT, fontSize: "22px", color: "#ef4444" }).setOrigin(1, 0.5);
+    this.scoreText = addChip(this, GAME_WIDTH / 2, 34, { width: 180 });
+    this.scoreText.setText("Round 0");
+    this.add.text(GAME_WIDTH - 100, 74, `🏆 Best ${getBest("simon")}`, { fontFamily: FONT, fontSize: "16px", color: "#fde68a" }).setOrigin(0.5);
+    this.livesText = addChip(this, GAME_WIDTH - 100, 34, { width: 140 });
     this.status = this.add.text(GAME_WIDTH / 2, 90, "", { fontFamily: FONT, fontSize: "28px", color: "#fde047", fontStyle: "700" }).setOrigin(0.5);
 
     PADS.forEach((p, i) => {
       const x = GAME_WIDTH / 2 + (i % 2 === 0 ? -125 : 125);
       const y = 215 + Math.floor(i / 2) * 150;
-      const pad = this.add.rectangle(x, y, 230, 136, p.base).setStrokeStyle(4, 0xffffff, 0.35).setInteractive({ useHandCursor: true });
+      const pad = new RoundTile(this, x, y, 230, 136, p.base, { radius: 26 }).setInteractive({ useHandCursor: true });
       pad.on("pointerdown", () => this.press(i));
       this.pads.push(pad);
     });

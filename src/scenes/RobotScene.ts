@@ -1,4 +1,8 @@
 import Phaser from "phaser";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
+import { RoundTile } from "../ui/roundTile";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -30,10 +34,10 @@ export class RobotScene extends Phaser.Scene {
   private lockUntil = 0;
   private levelObjs: Phaser.GameObjects.GameObject[] = [];
   private robot!: Phaser.GameObjects.Text;
-  private slotRects: Phaser.GameObjects.Rectangle[] = [];
+  private slotRects: RoundTile[] = [];
   private slotTexts: Phaser.GameObjects.Text[] = [];
-  private title!: Phaser.GameObjects.Text;
-  private scoreText!: Phaser.GameObjects.Text;
+  private title!: Chip;
+  private scoreText!: Chip;
   private msg!: Phaser.GameObjects.Text;
   private limitText!: Phaser.GameObjects.Text;
   private hideMenu!: () => void;
@@ -57,12 +61,13 @@ export class RobotScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x0f3d3e);
+    setGradientBackground(this, PALETTES.robot);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.title = this.add.text(GAME_WIDTH / 2, 30, "", { fontFamily: FONT, fontSize: "24px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
-    this.scoreText = this.add.text(GAME_WIDTH - 20, 24, "Score 0", { fontFamily: FONT, fontSize: "20px", color: "#fde047", fontStyle: "700" }).setOrigin(1, 0.5);
-    this.add.text(GAME_WIDTH - 20, 50, `🏆 Best ${getBest("robot")}`, { fontFamily: FONT, fontSize: "15px", color: "#fde68a" }).setOrigin(1, 0.5);
+    this.title = addChip(this, GAME_WIDTH / 2, 34, { width: 200 });
+    this.scoreText = addChip(this, GAME_WIDTH - 100, 34, { icon: "⭐", width: 150 });
+    this.scoreText.setText("Score 0");
+    this.add.text(GAME_WIDTH - 100, 74, `🏆 Best ${getBest("robot")}`, { fontFamily: FONT, fontSize: "16px", color: "#fde68a" }).setOrigin(0.5);
     this.add.text(GAME_WIDTH / 2, 70, "Program the robot to reach the ⭐ — then press Run!", { fontFamily: FONT, fontSize: "19px", color: "#99f6e4" }).setOrigin(0.5);
     this.limitText = this.add.text(770, 120, "", { fontFamily: FONT, fontSize: "17px", color: "#ccfbf1" }).setOrigin(0.5);
     this.msg = this.add
@@ -73,7 +78,7 @@ export class RobotScene extends Phaser.Scene {
     for (let i = 0; i < MAX_SLOTS; i++) {
       const x = 640 + (i % 6) * 50;
       const y = 160 + Math.floor(i / 6) * 50;
-      const r = this.add.rectangle(x, y, 44, 44, 0x134e4a).setStrokeStyle(2, 0x5eead4, 0.6);
+      const r = new RoundTile(this, x, y, 44, 44, 0x134e4a, { raised: false, radius: 10 });
       const t = this.add.text(x, y, "", { fontFamily: FONT, fontSize: "26px" }).setOrigin(0.5);
       this.slotRects.push(r);
       this.slotTexts.push(t);
@@ -181,7 +186,7 @@ export class RobotScene extends Phaser.Scene {
       for (let x = 0; x < this.size; x++) {
         const c = this.cell({ x, y });
         const isStart = x === this.start.x && y === this.start.y;
-        this.levelObjs.push(this.add.rectangle(c.x, c.y, this.cs - 3, this.cs - 3, isStart ? 0x2dd4bf : (x + y) % 2 === 0 ? 0xccfbf1 : 0x99f6e4));
+        this.levelObjs.push(new RoundTile(this, c.x, c.y, this.cs - 3, this.cs - 3, isStart ? 0x2dd4bf : (x + y) % 2 === 0 ? 0xccfbf1 : 0x99f6e4, { raised: false, radius: 8 }));
       }
     }
     this.walls.forEach((k) => {

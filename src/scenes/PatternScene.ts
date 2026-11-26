@@ -1,4 +1,8 @@
 import Phaser from "phaser";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
+import { RoundTile } from "../ui/roundTile";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -93,8 +97,8 @@ export class PatternScene extends Phaser.Scene {
   private board: ChoiceBoard | null = null;
   private shown: Phaser.GameObjects.GameObject[] = [];
   private nextBtn: Btn | null = null;
-  private title!: Phaser.GameObjects.Text;
-  private scoreText!: Phaser.GameObjects.Text;
+  private title!: Chip;
+  private scoreText!: Chip;
   private msg!: Phaser.GameObjects.Text;
   private hideMenu!: () => void;
 
@@ -118,11 +122,12 @@ export class PatternScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x1e1b4b);
+    setGradientBackground(this, PALETTES.pattern);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.title = this.add.text(GAME_WIDTH / 2, 36, "", { fontFamily: FONT, fontSize: "26px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
-    this.scoreText = this.add.text(GAME_WIDTH - 20, 36, "Score 0", { fontFamily: FONT, fontSize: "22px", color: "#fde047", fontStyle: "700" }).setOrigin(1, 0.5);
+    this.title = addChip(this, GAME_WIDTH / 2, 34, { width: 200 });
+    this.scoreText = addChip(this, GAME_WIDTH - 100, 34, { icon: "⭐", width: 150 });
+    this.scoreText.setText("Score 0");
     this.msg = this.add.text(GAME_WIDTH / 2, 432, "", { fontFamily: FONT, fontSize: "22px", color: "#fde047", align: "center", wordWrap: { width: 860 } }).setOrigin(0.5);
 
     this.hideMenu = addMenuButton(this, () => {
@@ -147,7 +152,7 @@ export class PatternScene extends Phaser.Scene {
   }
 
   private box(x: number, y: number, label: string, size: number, color = 0x312e81): void {
-    const r = this.add.rectangle(x, y, 88, 88, color).setStrokeStyle(3, 0xffffff, 0.35);
+    const r = new RoundTile(this, x, y, 88, 88, color);
     const t = this.add.text(x, y, label, { fontFamily: FONT, fontSize: `${size}px`, color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
     this.shown.push(r, t);
   }

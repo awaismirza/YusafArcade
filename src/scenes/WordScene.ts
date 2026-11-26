@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+import { setGradientBackground } from "../ui/background";
+import { addChip, Chip } from "../ui/chips";
+import { PALETTES } from "../ui/palettes";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -64,8 +67,8 @@ export class WordScene extends Phaser.Scene {
   private slotRects: Phaser.GameObjects.Rectangle[] = [];
   private slotTexts: Phaser.GameObjects.Text[] = [];
   private objs: Phaser.GameObjects.GameObject[] = [];
-  private title!: Phaser.GameObjects.Text;
-  private scoreText!: Phaser.GameObjects.Text;
+  private title!: Chip;
+  private scoreText!: Chip;
   private clueEmoji!: Phaser.GameObjects.Text;
   private clueText!: Phaser.GameObjects.Text;
   private hintBtn!: Btn;
@@ -96,11 +99,12 @@ export class WordScene extends Phaser.Scene {
 
   create(): void {
     setTouchChrome("hidden");
-    this.cameras.main.setBackgroundColor(0x7c2d12);
+    setGradientBackground(this, PALETTES.words);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
-    this.title = this.add.text(GAME_WIDTH / 2, 36, "", { fontFamily: FONT, fontSize: "26px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
-    this.scoreText = this.add.text(GAME_WIDTH - 20, 36, "Score 0", { fontFamily: FONT, fontSize: "22px", color: "#fde047", fontStyle: "700" }).setOrigin(1, 0.5);
+    this.title = addChip(this, GAME_WIDTH / 2, 34, { width: 200 });
+    this.scoreText = addChip(this, GAME_WIDTH - 100, 34, { icon: "⭐", width: 150 });
+    this.scoreText.setText("Score 0");
     this.clueEmoji = this.add.text(GAME_WIDTH / 2, 120, "", { fontFamily: FONT, fontSize: "84px" }).setOrigin(0.5);
     this.clueText = this.add
       .text(GAME_WIDTH / 2, 190, "", { fontFamily: FONT, fontSize: "24px", color: "#ffedd5", align: "center", wordWrap: { width: 800 } })
