@@ -106,3 +106,12 @@ The owner also asks for: two-finger camera control and a camera-view button on t
 
 - Each step ends on the working branch with tests passing, a headless iPad-emulation check and screenshots. Pushing to `main` or deploying to Pages only happens when the owner asks.
 - If a step turns out much bigger than expected, stop and say so before continuing.
+
+## Addendum 2026-11-26: steps 4 and 5 in one go
+
+The owner asked for every game to be modernised, a full plan, and execution in one go. Calls made (owner can redirect):
+
+- Every game keeps its own accent colour and uses shared Soft Glass pieces (score chips, progress bars, tiles, effects, gradient backgrounds, per-game palettes). A global layer gives every scene the soft backdrop and the Nunito font.
+- Board games get a win celebration, capture effects and softer palettes so none looks different from Chess.
+- Questions grow to roughly three to five times today's variety for ages 7 to 10, with a world-knowledge mix that includes South Asia. Validators and unit tests guard the content.
+- Plan: `docs/superpowers/plans/2026-11-26-all-games-modern-look-and-questions.md`. One push to `main` at the end.
