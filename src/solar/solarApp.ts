@@ -183,7 +183,7 @@ function labelSprite(text: string): THREE.Sprite {
   ctx.roundRect(4, 8, 292, 54, 27);
   ctx.fill();
   ctx.fillStyle = "#ffffff";
-  ctx.font = "700 32px system-ui, sans-serif";
+  ctx.font = "800 32px Nunito, system-ui, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(text, 150, 36);
@@ -201,7 +201,7 @@ export function startSolar(onExit: () => void): () => void {
   const root = document.createElement("div");
   root.id = "solar-root";
   root.style.cssText =
-    "position:fixed;inset:0;z-index:200;background:#02030a;color:#fff;font-family:system-ui,-apple-system,'Apple Color Emoji',sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;";
+    "position:fixed;inset:0;z-index:200;background:#02030a;color:#fff;font-family:Nunito,system-ui,-apple-system,'Apple Color Emoji',sans-serif;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;";
   document.body.appendChild(root);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -341,8 +341,8 @@ export function startSolar(onExit: () => void): () => void {
     return e;
   };
   const btnCss = (bg: string): string =>
-    `background:${bg};color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:12px;padding:9px 14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;touch-action:manipulation;`;
-  const panelCss = "background:rgba(2,6,23,0.78);border:1px solid rgba(148,163,184,0.35);border-radius:16px;padding:14px 16px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);";
+    `background:${bg};color:#fff;border:1px solid rgba(255,255,255,0.32);border-radius:999px;padding:10px 18px;min-height:44px;font-size:15px;font-weight:800;box-shadow:0 4px 0 rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.3);cursor:pointer;font-family:inherit;touch-action:manipulation;`;
+  const panelCss = "background:linear-gradient(160deg,rgba(40,34,88,.72),rgba(10,12,40,.82));border:1px solid rgba(255,255,255,0.22);border-radius:24px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);";
 
   const top = h("div", "position:absolute;left:0;right:0;top:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 12px;pointer-events:none;");
   const backBtn = h("button", btnCss("#334155") + "pointer-events:auto;", "← Menu");
@@ -374,7 +374,7 @@ export function startSolar(onExit: () => void): () => void {
   const addChip = (id: string, label: string, dot: string): void => {
     const c = h(
       "button",
-      "flex:0 0 auto;display:flex;align-items:center;gap:7px;background:rgba(30,41,59,.9);color:#fff;border:2px solid transparent;border-radius:999px;padding:9px 14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;touch-action:manipulation;",
+      "flex:0 0 auto;display:flex;align-items:center;gap:7px;background:rgba(40,34,88,.75);color:#fff;border:2px solid rgba(255,255,255,.12);border-radius:999px;padding:10px 16px;min-height:44px;font-size:15px;font-weight:800;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);cursor:pointer;font-family:inherit;touch-action:manipulation;",
       `<span style="width:12px;height:12px;border-radius:50%;background:${dot};display:inline-block"></span>${label}`
     );
     c.addEventListener("click", () => onChip(id));
