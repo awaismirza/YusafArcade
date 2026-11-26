@@ -2,9 +2,9 @@
 
 Rules for any AI agent (Claude, Codex, or other) working on Yusaf Arcade. `CLAUDE.md` points here, so these rules apply to every agent. The full specification lives in [`docs/SPEC.md`](docs/SPEC.md).
 
-## Non-negotiable: every game must work on an iPad browser
+## Non-negotiable: every game must work in a mobile browser
 
-The games are played by a child on an **iPad (Safari, and Chrome on iPadOS)**. Every new or changed game must work there. Treat these as hard requirements, not nice-to-haves:
+Yusaf Arcade is a **browser-based game for mobile browsers only** (no native app; desktop is not a target, it is only used for development and testing). It is played by a child mainly on an **iPad (Safari, and Chrome on iPadOS)**, and must also work on phones in landscape. Every new or changed game must work there. Treat these as hard requirements, not nice-to-haves:
 
 1. **Touch first.** Every action must work with a single tap or drag via pointer events. Hover-only UI (tooltips, `:hover` reveals, `mouseover` affordances) must not be the only way to learn or do something. Keyboard shortcuts may exist as extras, never as the only option.
 2. **Targets at least 44×44 CSS px** (Phaser coordinates scale with the canvas, so check the on-screen size, not the game size).
@@ -31,7 +31,7 @@ Before you call a game done:
 
 1. `npm run build` must pass (this runs `tsc -b`, so type errors fail the build). Run `npm test` when you touch any game rules (`tests/`).
 2. Load the built app with `vite preview` and play through the game in a headless browser. Check the browser console for errors.
-3. Check the game with an iPad viewport (Playwright device name `iPad Pro 11` or `iPad (gen 7)`; do not override `deviceScaleFactor` when using a named device).
+3. Check the game on an iPad and on a phone in landscape with real touch taps: `node scripts/shot.cjs out.png --ipad ...` and `--phone ...` (Playwright named devices; do not override `deviceScaleFactor`). Run `npx vite preview --port 4173 --strictPort` first.
 4. Note anything you could not verify (for example, a real iPad, or a live multiplayer backend) in your final message. Do not claim it works on iPad if you have not checked.
 
 ## Repository conventions

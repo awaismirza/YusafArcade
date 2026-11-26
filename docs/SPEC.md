@@ -10,14 +10,16 @@ A collection of learning games and classic board games for a child (ages 7–10)
 
 ### 2.1 Target devices
 
+Yusaf Arcade is a **browser-based game for mobile browsers only**: it runs in the browser, with no native app and no install. Desktop browsers are not a target; they are used only for development and testing.
+
 | Device | Browser | Priority |
 | --- | --- | --- |
 | iPad (iPadOS 16+) | Safari | **Required** |
 | iPad (iPadOS 16+) | Chrome (WebKit engine) | **Required** |
-| Desktop Chrome, Edge, Firefox | Latest | Supported (for development) |
-| Phones | Any | Best effort; landscape only |
+| Phones (iOS and Android), landscape | Safari, Chrome | **Required**: must be playable at phone-landscape size |
+| Desktop | Any | Not a target (development and testing only) |
 
-Safari on iPadOS uses WebKit for every browser, so test with WebKit or with the iPad device emulation in Chromium.
+Safari on iPadOS uses WebKit for every browser, so test with WebKit or with the device emulation in Chromium. `scripts/shot.cjs` has `--ipad` and `--phone` modes that use real touch taps.
 
 ### 2.2 Input
 
@@ -104,6 +106,7 @@ Rules for local multiplayer:
 | `src/games/shared/board8.ts` | The 8×8 wooden board, highlight markers and the camera that turns for pass-and-play. |
 | `src/games/shared/dice3d.ts` | 3D dice with a shake-then-toss roll animation that settles on a chosen value. |
 | `src/games/shared/pawn3d.ts` | Glossy coloured pawns. |
+| `src/games/chess/pieces3d.ts` | Staunton-style chess pieces (ivory and ebony) with outlines and soft contact shadows, plus the chess board palette. Pure geometry, tested in Node. |
 
 ## 6. Build and deployment
 
@@ -116,7 +119,6 @@ Rules for local multiplayer:
 
 - Ludo house rules: a token captures every opponent token on a non-safe square it lands on; there is no blocking; the first player to bring all four tokens home wins. With several dice, each die is a separate move: tap a die, then a token.
 - Chess promotes pawns to Queens in play. The rules module supports all four promotion pieces, but the UI does not offer a choice yet.
-- Chess 3D pieces are built from simple turned and extruded shapes, so the knights look blocky from some angles.
 - Nothing has been run on a physical iPad. Checks so far use a headless browser (Chromium, with a WebGL software renderer, and an iPad Pro 11 device emulation with touch taps). Confirm on a real iPad before calling a game finished.
 
 ## 8. Definition of done for a new game

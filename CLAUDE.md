@@ -4,6 +4,7 @@ Claude Code reads this file automatically. **The rules for this repository are i
 
 The short version, so it is never missed:
 
+- **This is a browser game for mobile browsers only** (iPad and phones in landscape; no native app; desktop is not a target).
 - **Every game must work on an iPad browser.** Touch-first, targets of at least 44 px, no hover-only UI, audio unlocked by a tap, WebGL with a fallback, no `alert`/`confirm`/`prompt`, and no reliance on storage that Safari may clear.
 - **Multiplayer is local only:** two players share one iPad (pass-and-play). No internet play, no servers, no realtime backends.
 - **Every multiplayer game offers a "2 players (same iPad)" option** next to the computer levels, and shows whose turn it is in words.
