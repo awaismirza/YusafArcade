@@ -5,49 +5,14 @@ import { PALETTES } from "../ui/palettes";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
+import { pickRounds } from "../data/pickRounds";
+import { EASY_WORDS as EASY, HARD_WORDS as HARD, W } from "../data/wordBank";
 import { addMenuButton, Btn, FONT, makeButton, pollEndTaps, resetTaps, showGameOver, showLevelPicker } from "../ui/arcadeKit";
 
 const ROUNDS = 8;
 
-type W = { word: string; clue: string; emoji?: string };
 
-const EASY: W[] = [
-  { word: "CAT", clue: "A pet that says meow", emoji: "🐱" },
-  { word: "DOG", clue: "A pet that barks", emoji: "🐶" },
-  { word: "SUN", clue: "It shines in the day", emoji: "☀️" },
-  { word: "FISH", clue: "It swims in water", emoji: "🐟" },
-  { word: "TREE", clue: "It has leaves and a trunk", emoji: "🌳" },
-  { word: "BOOK", clue: "You read it", emoji: "📖" },
-  { word: "STAR", clue: "It twinkles at night", emoji: "⭐" },
-  { word: "MOON", clue: "It glows at night", emoji: "🌙" },
-  { word: "CAKE", clue: "A sweet birthday treat", emoji: "🍰" },
-  { word: "BIRD", clue: "It can fly and sing", emoji: "🐦" },
-  { word: "FROG", clue: "It hops and says ribbit", emoji: "🐸" },
-  { word: "APPLE", clue: "A red or green fruit", emoji: "🍎" },
-  { word: "HOUSE", clue: "A place to live", emoji: "🏠" },
-  { word: "TRAIN", clue: "It runs on tracks", emoji: "🚆" },
-  { word: "PIZZA", clue: "Cheesy and round", emoji: "🍕" },
-  { word: "ROBOT", clue: "A machine that can move", emoji: "🤖" },
-];
 
-const HARD: W[] = [
-  { word: "ELEPHANT", clue: "The largest animal that lives on land" },
-  { word: "PLANET", clue: "Earth, Mars and Jupiter are all this" },
-  { word: "GALAXY", clue: "A huge group of stars. The Milky Way is one" },
-  { word: "VOLCANO", clue: "A mountain that can erupt with hot lava" },
-  { word: "DINOSAUR", clue: "A giant reptile that lived millions of years ago" },
-  { word: "TELESCOPE", clue: "You use it to look at faraway stars" },
-  { word: "BUTTERFLY", clue: "It starts life as a caterpillar" },
-  { word: "RAINBOW", clue: "Seven colours in the sky after rain" },
-  { word: "MAGNET", clue: "It attracts iron and steel" },
-  { word: "PYRAMID", clue: "Ancient Egyptians built these giant tombs" },
-  { word: "OXYGEN", clue: "The gas we need to breathe" },
-  { word: "ISLAND", clue: "Land with water all around it" },
-  { word: "SCIENTIST", clue: "A person who studies how the world works" },
-  { word: "DIAMOND", clue: "A very hard, sparkly gemstone" },
-  { word: "ASTRONAUT", clue: "A person who travels into space" },
-  { word: "SKELETON", clue: "All the bones in your body" },
-];
 
 type Tile = { btn: Btn; ch: string; used: boolean };
 
@@ -130,7 +95,7 @@ export class WordScene extends Phaser.Scene {
     });
 
     showLevelPicker(this, "Word Wizard 🔤", "Unscramble the letters to spell the word!\nTap the letters, or type on a keyboard.", (tier) => {
-      this.words = Phaser.Utils.Array.Shuffle([...(tier === 0 ? EASY : HARD)]).slice(0, ROUNDS);
+      this.words = pickRounds(tier === 0 ? EASY : HARD, ROUNDS);
       gameAudio.unlock();
       gameAudio.startMusic();
       this.nextWord();

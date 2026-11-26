@@ -1,46 +1,9 @@
 import Phaser from "phaser";
 import { FONT } from "../ui/arcadeKit";
+import { COUNTRIES } from "../data/countries";
 import { ChoiceGameScene, GameCfg, Round, pick, shuffle, withAnswer } from "./ChoiceGameScene";
 
-type Country = { name: string; flag: string; capital: string; continent: string };
 
-const COUNTRIES: Country[] = [
-  { name: "Japan", flag: "🇯🇵", capital: "Tokyo", continent: "Asia" },
-  { name: "France", flag: "🇫🇷", capital: "Paris", continent: "Europe" },
-  { name: "Italy", flag: "🇮🇹", capital: "Rome", continent: "Europe" },
-  { name: "Germany", flag: "🇩🇪", capital: "Berlin", continent: "Europe" },
-  { name: "Spain", flag: "🇪🇸", capital: "Madrid", continent: "Europe" },
-  { name: "United Kingdom", flag: "🇬🇧", capital: "London", continent: "Europe" },
-  { name: "Greece", flag: "🇬🇷", capital: "Athens", continent: "Europe" },
-  { name: "Sweden", flag: "🇸🇪", capital: "Stockholm", continent: "Europe" },
-  { name: "Norway", flag: "🇳🇴", capital: "Oslo", continent: "Europe" },
-  { name: "Ireland", flag: "🇮🇪", capital: "Dublin", continent: "Europe" },
-  { name: "Portugal", flag: "🇵🇹", capital: "Lisbon", continent: "Europe" },
-  { name: "Netherlands", flag: "🇳🇱", capital: "Amsterdam", continent: "Europe" },
-  { name: "Brazil", flag: "🇧🇷", capital: "Brasília", continent: "South America" },
-  { name: "Argentina", flag: "🇦🇷", capital: "Buenos Aires", continent: "South America" },
-  { name: "Peru", flag: "🇵🇪", capital: "Lima", continent: "South America" },
-  { name: "Chile", flag: "🇨🇱", capital: "Santiago", continent: "South America" },
-  { name: "Colombia", flag: "🇨🇴", capital: "Bogotá", continent: "South America" },
-  { name: "Canada", flag: "🇨🇦", capital: "Ottawa", continent: "North America" },
-  { name: "United States", flag: "🇺🇸", capital: "Washington, D.C.", continent: "North America" },
-  { name: "Mexico", flag: "🇲🇽", capital: "Mexico City", continent: "North America" },
-  { name: "Cuba", flag: "🇨🇺", capital: "Havana", continent: "North America" },
-  { name: "Australia", flag: "🇦🇺", capital: "Canberra", continent: "Oceania" },
-  { name: "New Zealand", flag: "🇳🇿", capital: "Wellington", continent: "Oceania" },
-  { name: "India", flag: "🇮🇳", capital: "New Delhi", continent: "Asia" },
-  { name: "China", flag: "🇨🇳", capital: "Beijing", continent: "Asia" },
-  { name: "South Korea", flag: "🇰🇷", capital: "Seoul", continent: "Asia" },
-  { name: "Thailand", flag: "🇹🇭", capital: "Bangkok", continent: "Asia" },
-  { name: "Indonesia", flag: "🇮🇩", capital: "Jakarta", continent: "Asia" },
-  { name: "Saudi Arabia", flag: "🇸🇦", capital: "Riyadh", continent: "Asia" },
-  { name: "Pakistan", flag: "🇵🇰", capital: "Islamabad", continent: "Asia" },
-  { name: "Egypt", flag: "🇪🇬", capital: "Cairo", continent: "Africa" },
-  { name: "South Africa", flag: "🇿🇦", capital: "Pretoria", continent: "Africa" },
-  { name: "Kenya", flag: "🇰🇪", capital: "Nairobi", continent: "Africa" },
-  { name: "Nigeria", flag: "🇳🇬", capital: "Abuja", continent: "Africa" },
-  { name: "Morocco", flag: "🇲🇦", capital: "Rabat", continent: "Africa" },
-];
 
 const CONTINENTS = ["Asia", "Europe", "Africa", "North America", "South America", "Oceania"];
 
