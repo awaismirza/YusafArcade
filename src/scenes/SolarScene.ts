@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { setTouchChrome } from "../input/touchChrome";
 
@@ -16,7 +17,7 @@ export class SolarScene extends Phaser.Scene {
     setTouchChrome("hidden");
     this.cameras.main.setBackgroundColor(0x02030a);
     const loading = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "Launching the solar system… 🚀", { fontFamily: "system-ui, sans-serif", fontSize: "26px", color: "#ffffff" })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, "Launching the solar system… 🚀", { fontFamily: FONT, fontSize: "26px", color: "#ffffff" })
       .setOrigin(0.5);
 
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {

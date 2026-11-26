@@ -41,7 +41,7 @@ function boardTexture(): THREE.CanvasTexture {
     ctx.lineWidth = 3;
     ctx.strokeRect(x + 1.5, y + 1.5, cell - 3, cell - 3);
     ctx.fillStyle = "#7c2d12";
-    ctx.font = "800 38px system-ui, sans-serif";
+    ctx.font = "800 38px Nunito, system-ui, sans-serif";
     ctx.textBaseline = "top";
     ctx.fillText(String(n), x + 10, y + 8);
   }

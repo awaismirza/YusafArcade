@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -7,7 +8,6 @@ import { addMenuButton, pollEndTaps, resetTaps, showGameOver } from "../ui/arcad
 type Occupant = { text: Phaser.GameObjects.Text; kind: "mole" | "bomb"; until: number };
 type Hole = { x: number; y: number; occ: Occupant | null };
 
-const FONT = "system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif";
 const ROUND_MS = 30000;
 
 export class WhackScene extends Phaser.Scene {
@@ -57,11 +57,11 @@ export class WhackScene extends Phaser.Scene {
     }
 
     this.scoreText = this.add
-      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: "system-ui, sans-serif", fontSize: "40px", color: "#ffffff", fontStyle: "700", stroke: "#14532d", strokeThickness: 6 })
+      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: FONT, fontSize: "40px", color: "#ffffff", fontStyle: "700", stroke: "#14532d", strokeThickness: 6 })
       .setOrigin(0.5)
       .setDepth(50);
     this.timeText = this.add
-      .text(GAME_WIDTH - 20, 30, "30s", { fontFamily: "system-ui, sans-serif", fontSize: "28px", color: "#fef08a", fontStyle: "700", stroke: "#14532d", strokeThickness: 5 })
+      .text(GAME_WIDTH - 20, 30, "30s", { fontFamily: FONT, fontSize: "28px", color: "#fef08a", fontStyle: "700", stroke: "#14532d", strokeThickness: 5 })
       .setOrigin(1, 0.5)
       .setDepth(50);
     this.hint = this.add

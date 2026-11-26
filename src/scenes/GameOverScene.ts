@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { deviceUsesTouch, touchPad } from "../input/touchPad";
 import { setTouchChrome } from "../input/touchChrome";
@@ -30,7 +31,7 @@ export class GameOverScene extends Phaser.Scene {
 
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 100, "Game Over", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "48px",
         color: "#fc8181",
       })
@@ -42,7 +43,7 @@ export class GameOverScene extends Phaser.Scene {
         GAME_HEIGHT / 2 - 40,
         `Distance ${Math.floor(this.score)} m   ·   Coins ${this.coins}`,
         {
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: FONT,
           fontSize: "22px",
           color: "#e2e8f0",
         }
@@ -60,7 +61,7 @@ export class GameOverScene extends Phaser.Scene {
       : "SPACE restarts · M opens main menu";
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 36, hint, {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "15px",
         color: "#94a3b8",
       })

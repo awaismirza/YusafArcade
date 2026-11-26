@@ -1,10 +1,10 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
 import { addMenuButton, pollEndTaps, resetTaps, showGameOver } from "../ui/arcadeKit";
 
-const FONT = "system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif";
 const SYMBOLS = ["🍎", "🍌", "🍇", "🍒", "🐶", "🐱", "🚀", "⭐"];
 const CW = 130;
 const CH = 100;
@@ -54,11 +54,11 @@ export class MemoryScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setTouchChrome("hidden"));
 
     this.movesText = this.add
-      .text(GAME_WIDTH / 2, 30, "Moves 0", { fontFamily: "system-ui, sans-serif", fontSize: "30px", color: "#ffffff", fontStyle: "700" })
+      .text(GAME_WIDTH / 2, 30, "Moves 0", { fontFamily: FONT, fontSize: "30px", color: "#ffffff", fontStyle: "700" })
       .setOrigin(0.5)
       .setDepth(50);
     this.timeText = this.add
-      .text(GAME_WIDTH - 20, 30, "0s", { fontFamily: "system-ui, sans-serif", fontSize: "26px", color: "#fde047", fontStyle: "700" })
+      .text(GAME_WIDTH - 20, 30, "0s", { fontFamily: FONT, fontSize: "26px", color: "#fde047", fontStyle: "700" })
       .setOrigin(1, 0.5)
       .setDepth(50);
 

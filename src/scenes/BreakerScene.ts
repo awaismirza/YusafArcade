@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch } from "../input/touchPad";
@@ -68,16 +69,16 @@ export class BreakerScene extends Phaser.Scene {
     this.paddle = this.add.rectangle(GAME_WIDTH / 2, PADDLE_Y, this.paddleW, 14, 0xe2e8f0).setStrokeStyle(2, 0x38bdf8).setDepth(10);
 
     this.scoreText = this.add
-      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: "system-ui, sans-serif", fontSize: "36px", color: "#ffffff", fontStyle: "700" })
+      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: FONT, fontSize: "36px", color: "#ffffff", fontStyle: "700" })
       .setOrigin(0.5)
       .setDepth(50);
     this.livesText = this.add
-      .text(GAME_WIDTH - 20, 24, "", { fontFamily: "system-ui, sans-serif", fontSize: "26px", color: "#f87171" })
+      .text(GAME_WIDTH - 20, 24, "", { fontFamily: FONT, fontSize: "26px", color: "#f87171" })
       .setOrigin(1, 0.5)
       .setDepth(50);
     this.hint = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 70, deviceUsesTouch() ? "Hold ◀ ▶ to glide · tap to launch" : "Mouse / arrows to move · click or SPACE to launch", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "20px",
         color: "#e2e8f0",
       })
@@ -116,7 +117,7 @@ export class BreakerScene extends Phaser.Scene {
       .setDepth(40)
       .setInteractive();
     this.add
-      .text(x, y, label, { fontFamily: "system-ui, sans-serif", fontSize: "34px", color: "#ffffff" })
+      .text(x, y, label, { fontFamily: FONT, fontSize: "34px", color: "#ffffff" })
       .setOrigin(0.5)
       .setAlpha(0.7)
       .setDepth(41);
@@ -192,7 +193,7 @@ export class BreakerScene extends Phaser.Scene {
     const kind: "wide" | "multi" = Math.random() < 0.5 ? "wide" : "multi";
     const sprite = this.add.rectangle(x, y, 40, 20, kind === "wide" ? 0x22c55e : 0xfacc15).setStrokeStyle(2, 0xffffff).setDepth(9);
     const label = this.add
-      .text(x, y, kind === "wide" ? "W" : "x3", { fontFamily: "system-ui, sans-serif", fontSize: "14px", color: "#0f172a", fontStyle: "700" })
+      .text(x, y, kind === "wide" ? "W" : "x3", { fontFamily: FONT, fontSize: "14px", color: "#0f172a", fontStyle: "700" })
       .setOrigin(0.5)
       .setDepth(10);
     this.drops.push({ sprite, label, kind });

@@ -1,11 +1,11 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch } from "../input/touchPad";
 import { setTouchChrome } from "../input/touchChrome";
 import { addMenuButton, addMovePads, pollEndTaps, resetTaps, showGameOver } from "../ui/arcadeKit";
 
-const FONT = "system-ui, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif";
 const FRUITS = ["🍎", "🍌", "🍇", "🍊", "🍓", "🍉"];
 const BASKET_Y = GAME_HEIGHT - 110;
 
@@ -60,7 +60,7 @@ export class CatchScene extends Phaser.Scene {
     this.basket = this.add.text(GAME_WIDTH / 2, BASKET_Y, "🧺", { fontFamily: FONT, fontSize: "84px" }).setOrigin(0.5).setDepth(10);
 
     this.scoreText = this.add
-      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: "system-ui, sans-serif", fontSize: "40px", color: "#ffffff", fontStyle: "700", stroke: "#0c4a6e", strokeThickness: 6 })
+      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: FONT, fontSize: "40px", color: "#ffffff", fontStyle: "700", stroke: "#0c4a6e", strokeThickness: 6 })
       .setOrigin(0.5)
       .setDepth(50);
     this.livesText = this.add

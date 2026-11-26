@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch, touchPad } from "../input/touchPad";
@@ -97,7 +98,7 @@ export class FlappyScene extends Phaser.Scene {
 
     this.scoreText = this.add
       .text(GAME_WIDTH / 2, 56, "0", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "64px",
         color: "#ffffff",
         stroke: "#0f172a",
@@ -114,7 +115,7 @@ export class FlappyScene extends Phaser.Scene {
         GAME_HEIGHT / 2 - 20,
         deviceUsesTouch() ? "Tap Flap or tap the screen" : "SPACE or click to flap",
         {
-          fontFamily: "system-ui, sans-serif",
+          fontFamily: FONT,
           fontSize: "22px",
           color: "#0f172a",
         }
@@ -238,7 +239,7 @@ export class FlappyScene extends Phaser.Scene {
 
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - 72, "Game Over", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "44px",
         color: "#fecaca",
         fontStyle: "700",

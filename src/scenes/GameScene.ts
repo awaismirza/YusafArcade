@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch, touchPad } from "../input/touchPad";
 import { setTouchChrome } from "../input/touchChrome";
@@ -213,7 +214,7 @@ export class GameScene extends Phaser.Scene {
 
     this.distanceText = this.add
       .text(20, 16, "0 m", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "22px",
         color: "#0f172a",
         fontStyle: "bold",
@@ -222,7 +223,7 @@ export class GameScene extends Phaser.Scene {
       .setDepth(50);
     this.coinText = this.add
       .text(20, 44, "Coins 0", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "16px",
         color: "#854d0e",
       })
@@ -230,7 +231,7 @@ export class GameScene extends Phaser.Scene {
       .setDepth(50);
     this.stageText = this.add
       .text(20, 68, "Level 1  ·  reach 500 m", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "16px",
         color: "#7f1d1d",
       })
@@ -239,7 +240,7 @@ export class GameScene extends Phaser.Scene {
 
     this.startHint = this.add
       .text(GAME_WIDTH / 2, 150, deviceUsesTouch() ? "Tap Shoot to run" : "Press SPACE to run", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "32px",
         color: "#0f172a",
       })
@@ -248,7 +249,7 @@ export class GameScene extends Phaser.Scene {
       .setDepth(50);
     this.jumpHint = this.add
       .text(GAME_WIDTH / 2, 190, deviceUsesTouch() ? "Then use Jump, Duck, and Sword" : "Jump with W or ↑", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "16px",
         color: "#334155",
       })

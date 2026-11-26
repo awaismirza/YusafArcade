@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch } from "../input/touchPad";
@@ -62,18 +63,18 @@ export class StackScene extends Phaser.Scene {
     this.placed.push(base);
 
     this.scoreText = this.add
-      .text(GAME_WIDTH / 2, 40, "0", { fontFamily: "system-ui, sans-serif", fontSize: "56px", color: "#ffffff", fontStyle: "700" })
+      .text(GAME_WIDTH / 2, 40, "0", { fontFamily: FONT, fontSize: "56px", color: "#ffffff", fontStyle: "700" })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(50);
     this.toast = this.add
-      .text(GAME_WIDTH / 2, 100, "", { fontFamily: "system-ui, sans-serif", fontSize: "24px", color: "#fde047", fontStyle: "700" })
+      .text(GAME_WIDTH / 2, 100, "", { fontFamily: FONT, fontSize: "24px", color: "#fde047", fontStyle: "700" })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(50);
     this.hint = this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, deviceUsesTouch() ? "Tap to drop the block" : "Click or SPACE to drop the block", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "24px",
         color: "#e2e8f0",
       })

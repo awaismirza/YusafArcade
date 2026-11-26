@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch } from "../input/touchPad";
@@ -130,15 +131,15 @@ export class DodgerScene extends Phaser.Scene {
     this.shield = this.add.circle(this.ship.x, this.ship.y, 36, 0x38bdf8, 0.22).setStrokeStyle(3, 0x7dd3fc, 1).setDepth(11).setVisible(false);
 
     this.scoreText = this.add
-      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: "system-ui, sans-serif", fontSize: "40px", color: "#ffffff", fontStyle: "700" })
+      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: FONT, fontSize: "40px", color: "#ffffff", fontStyle: "700" })
       .setOrigin(0.5)
       .setDepth(50);
     this.livesText = this.add
-      .text(GAME_WIDTH - 20, 24, "", { fontFamily: "system-ui, sans-serif", fontSize: "26px", color: "#f87171" })
+      .text(GAME_WIDTH - 20, 24, "", { fontFamily: FONT, fontSize: "26px", color: "#f87171" })
       .setOrigin(1, 0.5)
       .setDepth(50);
     this.powerText = this.add
-      .text(GAME_WIDTH - 20, 52, "", { fontFamily: "system-ui, sans-serif", fontSize: "15px", color: "#fde047" })
+      .text(GAME_WIDTH - 20, 52, "", { fontFamily: FONT, fontSize: "15px", color: "#fde047" })
       .setOrigin(1, 0.5)
       .setDepth(50);
     this.hint = this.add
@@ -146,7 +147,7 @@ export class DodgerScene extends Phaser.Scene {
         GAME_WIDTH / 2,
         GAME_HEIGHT / 2,
         deviceUsesTouch() ? "Hold ◀ ▶ to steer · auto-fire\nDodge or shoot the rocks" : "Arrow keys / A D or drag to steer · auto-fire\nDodge or shoot the rocks",
-        { fontFamily: "system-ui, sans-serif", fontSize: "22px", color: "#e2e8f0", align: "center" }
+        { fontFamily: FONT, fontSize: "22px", color: "#e2e8f0", align: "center" }
       )
       .setOrigin(0.5)
       .setDepth(50);

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FONT } from "../ui/theme";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { deviceUsesTouch } from "../input/touchPad";
@@ -66,12 +67,12 @@ export class SnakeScene extends Phaser.Scene {
     this.gfx = this.add.graphics().setDepth(5);
 
     this.scoreText = this.add
-      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: "system-ui, sans-serif", fontSize: "40px", color: "#ffffff", fontStyle: "700" })
+      .text(GAME_WIDTH / 2, 30, "0", { fontFamily: FONT, fontSize: "40px", color: "#ffffff", fontStyle: "700" })
       .setOrigin(0.5)
       .setDepth(50);
     this.hint = this.add
       .text(GAME_WIDTH / 2, OY + (ROWS * CELL) / 2 + 60, deviceUsesTouch() ? "Use the arrow buttons (or swipe) to steer" : "Arrow keys / WASD or the arrow buttons to steer", {
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: FONT,
         fontSize: "24px",
         color: "#ffffff",
         stroke: "#052e16",

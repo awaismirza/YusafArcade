@@ -3,6 +3,7 @@ import "@fontsource/nunito/latin-700.css";
 import "@fontsource/nunito/latin-800.css";
 import Phaser from "phaser";
 import { withTimeout } from "./ui/gestureMath";
+import { addSoftBackdrop } from "./ui/glass";
 import { GAME_HEIGHT, GAME_WIDTH, PHYSICS } from "./config";
 import { gameAudio } from "./audio/sfx";
 import { deviceUsesTouch, touchPad } from "./input/touchPad";
@@ -69,6 +70,11 @@ await withTimeout(
 );
 
 const game = new Phaser.Game(config);
+
+// Every scene gets the soft backdrop unless it has already set its own gradient background.
+game.events.once(Phaser.Core.Events.READY, () => {
+  game.scene.getScenes(false).forEach((sc) => sc.events.on(Phaser.Scenes.Events.CREATE, () => addSoftBackdrop(sc)));
+});
 
 function holdButton(id: string, down: () => void, up: () => void): void {
   const el = document.getElementById(id);
