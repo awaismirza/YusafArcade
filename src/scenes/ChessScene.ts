@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { winBurst } from "../ui/fx";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -331,6 +332,7 @@ export class ChessScene extends Phaser.Scene {
     } else if (result === "insufficient") {
       detail = "Not enough pieces left to checkmate.";
     }
+    if (result === "checkmate" && (this.mode === "two" || this.pos.turn === "b")) this.time.delayedCall(600, () => winBurst(this));
     this.time.delayedCall(600, () => showGameOver(this, detail, () => this.scene.restart(), () => this.scene.start("Menu"), title));
   }
 

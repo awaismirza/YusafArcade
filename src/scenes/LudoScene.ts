@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { winBurst } from "../ui/fx";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -566,6 +567,7 @@ export class LudoScene extends Phaser.Scene {
     gameAudio.stopMusic();
     gameAudio.coin();
     const human = this.humans[this.seats.indexOf(color)];
+    if (human) this.time.delayedCall(700, () => winBurst(this));
     const title = human ? `${COLOR_NAMES[color]} wins! 🎉` : `${COLOR_NAMES[color]} (computer) wins`;
     this.time.delayedCall(700, () =>
       showGameOver(this, "All four tokens made it home.", () => this.scene.restart(), () => this.scene.start("Menu"), title)

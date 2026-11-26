@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { winBurst } from "../ui/fx";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -345,6 +346,7 @@ export class SnakesScene extends Phaser.Scene {
     gameAudio.coin();
     const human = this.humans[this.seats.indexOf(color)];
     const title = human ? `${COLOR_NAMES[color]} wins! 🎉` : `${COLOR_NAMES[color]} (computer) wins`;
+    if (human) this.time.delayedCall(700, () => winBurst(this));
     this.time.delayedCall(700, () => showGameOver(this, "Reached square 100!", () => this.scene.restart(), () => this.scene.start("Menu"), title));
   }
 

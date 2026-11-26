@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { winBurst } from "../ui/fx";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -128,7 +129,7 @@ export class CheckersScene extends Phaser.Scene {
   }
 
   private buildWorld(stage: ThreeStage): void {
-    const { group, squares } = buildBoard8({ light: 0xeedcb0, dark: 0x6b4423, plinth: 0x4a2c14 });
+    const { group, squares } = buildBoard8({ light: 0xf6e8c8, dark: 0x8a6446, plinth: 0x5a3a20 });
     this.squares = squares;
     stage.scene.add(group, this.markers.group, this.pieceGroup);
     this.mats = {
@@ -397,6 +398,7 @@ export class CheckersScene extends Phaser.Scene {
       if (this.mode === "two") gameAudio.coin();
     }
     gameAudio.stopMusic();
+    if (winner === WHITE || (winner === BLACK && this.mode === "two")) this.time.delayedCall(450, () => winBurst(this));
     this.time.delayedCall(450, () => showGameOver(this, detail, () => this.scene.restart(), () => this.scene.start("Menu"), title));
   }
 

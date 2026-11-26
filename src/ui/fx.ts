@@ -36,3 +36,11 @@ export function popText(scene: Phaser.Scene, x: number, y: number, text: string,
   scene.tweens.add({ targets: t, scale: 1.1, duration: 160, ease: "Back.easeOut" });
   scene.tweens.add({ targets: t, y: y - 60, alpha: 0, delay: 350, duration: 600, ease: "Quad.easeIn", onComplete: () => t.destroy() });
 }
+
+/** Two confetti bursts from the lower left and right, for a win. */
+export function winBurst(scene: Phaser.Scene): void {
+  const w = scene.scale.width;
+  const h = scene.scale.height;
+  confetti(scene, w * 0.3, h * 0.75, { count: 36 });
+  confetti(scene, w * 0.7, h * 0.75, { count: 36 });
+}
