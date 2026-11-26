@@ -31,6 +31,8 @@ import { WorldScene } from "./scenes/WorldScene";
 import { SolarScene } from "./scenes/SolarScene";
 import { CheckersScene } from "./scenes/CheckersScene";
 import { ChessScene } from "./scenes/ChessScene";
+import { LudoScene } from "./scenes/LudoScene";
+import { SnakesScene } from "./scenes/SnakesScene";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -52,7 +54,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [BootScene, MenuScene, GameScene, GameOverScene, FlappyScene, DodgerScene, BreakerScene, StackScene, SnakeScene, WhackScene, MemoryScene, CatchScene, MathScene, WordScene, PatternScene, QuizScene, ClockScene, ShapesScene, WorldScene, OddScene, FractionsScene, OperatorScene, SimonScene, SlideScene, SudokuScene, RobotScene, SolarScene, CheckersScene, ChessScene],
+  scene: [BootScene, MenuScene, GameScene, GameOverScene, FlappyScene, DodgerScene, BreakerScene, StackScene, SnakeScene, WhackScene, MemoryScene, CatchScene, MathScene, WordScene, PatternScene, QuizScene, ClockScene, ShapesScene, WorldScene, OddScene, FractionsScene, OperatorScene, SimonScene, SlideScene, SudokuScene, RobotScene, SolarScene, CheckersScene, ChessScene, LudoScene, SnakesScene],
 };
 
 const game = new Phaser.Game(config);

@@ -88,9 +88,22 @@ Rules for local multiplayer:
 
 | Game | Category | Status | Notes |
 | --- | --- | --- | --- |
-| Checkers | Board Games | Live. Computer and two-player. | Standard 8×8 draughts with compulsory jumps, multi-jumps and kings. |
-| Chess | Board Games | Live. Computer and two-player. | 3D board with Three.js. Full rules: castling, en passant, promotion (auto-queen in play), check, checkmate, stalemate, 50-move and repetition draws. Rules are tested with standard perft counts (`npm run test:chess`). |
+| Checkers | Board Games | Live. Computer (Easy, Challenge) and two-player. | Full-screen 3D board. Standard 8×8 draughts: compulsory jumps, multi-jumps, kings (stacked discs with a gold ring). |
+| Chess | Board Games | Live. Computer (Easy, Challenge) and two-player. | Full-screen 3D board. Castling, en passant, promotion (auto-queen in play), check, checkmate, stalemate, 50-move and repetition draws. Rules tested with standard perft counts. |
+| Ludo | Board Games | Live. 1 player vs computer, or 2–4 players on one iPad. | 3D board. Choose 1, 2 or 3 dice. Dice shake and toss onto the board. A 6 brings a token out and earns a bonus roll (up to 3 rolls in a turn). Land on a lone opponent off a safe square to send it home. Exact roll to finish. |
+| Snakes & Ladders | Board Games | Live. 1 player vs computer, or 2–4 players on one iPad. | 3D board with 10 snakes and 9 ladders. Choose 1, 2 or 3 dice (total is moved). A 6 on one die, or doubles on several, earns a bonus roll. Overshooting 100 bounces back. |
 | Other arcade, learn and puzzle games | Arcade / Learn / Puzzles | Live | Brought to this spec as they are changed. |
+
+### Shared 3D building blocks
+
+| Module | What it does |
+| --- | --- |
+| `src/ui/threeStage.ts` | Draws a three.js scene into an offscreen canvas and hands each frame to Phaser as a texture, so the Phaser menu, buttons and touch handling keep working. Returns `null` without WebGL. |
+| `src/ui/animQueue.ts` | Time-based animations and sequences, driven by the scene's `update`. |
+| `src/ui/hud.ts` | Status line, hint line and counter that float over a full-screen board. |
+| `src/games/shared/board8.ts` | The 8×8 wooden board, highlight markers and the camera that turns for pass-and-play. |
+| `src/games/shared/dice3d.ts` | 3D dice with a shake-then-toss roll animation that settles on a chosen value. |
+| `src/games/shared/pawn3d.ts` | Glossy coloured pawns. |
 
 ## 6. Build and deployment
 
@@ -101,9 +114,10 @@ Rules for local multiplayer:
 
 ## 7. Known limits
 
+- Ludo house rules: a token captures every opponent token on a non-safe square it lands on; there is no blocking; the first player to bring all four tokens home wins. With several dice, each die is a separate move: tap a die, then a token.
 - Chess promotes pawns to Queens in play. The rules module supports all four promotion pieces, but the UI does not offer a choice yet.
 - Chess 3D pieces are built from simple turned and extruded shapes, so the knights look blocky from some angles.
-- Nothing has been run on a physical iPad. Checks so far use a headless browser (Chromium, with a WebGL software renderer). Confirm on a real iPad before calling a game finished.
+- Nothing has been run on a physical iPad. Checks so far use a headless browser (Chromium, with a WebGL software renderer, and an iPad Pro 11 device emulation with touch taps). Confirm on a real iPad before calling a game finished.
 
 ## 8. Definition of done for a new game
 

@@ -42,6 +42,8 @@ const PUZZLES: Entry[] = [
 const BOARD: Entry[] = [
   ["Checkers ⚫", "Jump to capture · crown a king", 0x3f6212, "Checkers"],
   ["Chess ♟️", "3D board · checkmate the king", 0x78350f, "Chess"],
+  ["Ludo 🎲", "Roll the dice · race tokens home", 0xb91c1c, "Ludo"],
+  ["Snakes & Ladders 🐍", "Climb ladders · dodge snakes", 0x047857, "Snakes"],
 ];
 
 const TABS: { name: string; note: string; games: Entry[] }[] = [

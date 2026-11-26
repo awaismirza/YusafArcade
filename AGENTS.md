@@ -29,7 +29,7 @@ The games are played by a child on an **iPad (Safari, and Chrome on iPadOS)**. E
 
 Before you call a game done:
 
-1. `npm run build` must pass (this runs `tsc -b`, so type errors fail the build). Run `npm run test:chess` when you touch the chess rules.
+1. `npm run build` must pass (this runs `tsc -b`, so type errors fail the build). Run `npm test` when you touch any game rules (`tests/`).
 2. Load the built app with `vite preview` and play through the game in a headless browser. Check the browser console for errors.
 3. Check the game with an iPad viewport (Playwright device name `iPad Pro 11` or `iPad (gen 7)`; do not override `deviceScaleFactor` when using a named device).
 4. Note anything you could not verify (for example, a real iPad, or a live multiplayer backend) in your final message. Do not claim it works on iPad if you have not checked.
@@ -37,6 +37,7 @@ Before you call a game done:
 ## Repository conventions
 
 - TypeScript, Phaser 3, Vite. Three.js is available for 3D (see `src/scenes/ChessScene.ts` once it exists).
+- 3D games share `src/ui/threeStage.ts`, `src/ui/animQueue.ts`, `src/ui/hud.ts` and `src/games/shared/`. Reuse them instead of setting up a new renderer.
 - Game scenes live in `src/scenes/`, one file per game, and are registered in `src/main.ts` and listed in `src/scenes/MenuScene.ts`.
 - Shared UI helpers belong in `src/ui/arcadeKit.ts`. Reuse them before writing new ones.
 - Pure game logic (rules, AI) goes in its own module with no Phaser imports, so it can be tested in Node.

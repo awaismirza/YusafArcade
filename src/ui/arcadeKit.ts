@@ -133,7 +133,7 @@ export function showLevelPicker(
 export type ModeOption = { label: string; sub: string; color: number; mode: string };
 
 /**
- * Full-screen mode picker with up to three choices (e.g. Easy, Challenge, 2 players on one iPad).
+ * Full-screen mode picker with up to four choices (e.g. Easy, Challenge, 2 players on one iPad).
  * Tap-only: every button is a big target, no hover needed.
  */
 export function showModePicker(
@@ -154,14 +154,14 @@ export function showModePicker(
       .setOrigin(0.5)
       .setDepth(56)
   );
-  const width = options.length === 2 ? 360 : 270;
-  const gap = options.length === 2 ? 420 : 300;
+  const width = options.length <= 2 ? 360 : options.length === 3 ? 270 : 214;
+  const gap = options.length <= 2 ? 420 : options.length === 3 ? 300 : 228;
   options.forEach((opt, i) => {
     const x = GAME_WIDTH / 2 + (i - (options.length - 1) / 2) * gap;
     const btn = makeButton(scene, x, 330, width, 140, `${opt.label}\n${opt.sub}`, opt.color, () => {
       items.forEach((o) => o.destroy());
       onPick(opt.mode);
-    }, 26, 56);
+    }, options.length >= 4 ? 22 : 26, 56);
     items.push(btn.container);
   });
 }
