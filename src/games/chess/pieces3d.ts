@@ -6,7 +6,7 @@
  * turned shapes; knights keep one geometry per colour because they face opposite ways).
  */
 import * as THREE from "three";
-import type { Piece, PieceType } from "./rules";
+import type { Piece } from "./rules";
 
 /** Pieces are drawn this much bigger than the 1-unit square-based design sizes below. */
 export const PIECE_SCALE = 1.12;
@@ -15,11 +15,11 @@ export const CHESS_PALETTE = {
   /** Warm off-white that still shades. */
   ivory: 0xf1e6cf,
   /** Deep brown-black with a warm sheen. */
-  ebony: 0x2b2420,
+  ebony: 0x221d1a,
   lightSquare: 0xd2ab78,
   darkSquare: 0x7a4a2b,
   plinth: 0x4a2c14,
-  outline: 0x2a1a0e,
+  outline: 0x4a3626,
 };
 
 export type ChessMaterials = {
@@ -37,8 +37,8 @@ export function makeChessMaterials(): ChessMaterials {
       roughness: 0.32,
       clearcoat: 0.8,
       clearcoatRoughness: 0.2,
-      sheen: 1,
-      sheenColor: new THREE.Color(0x9a6a45),
+      sheen: 0.7,
+      sheenColor: new THREE.Color(0x7a5a42),
       sheenRoughness: 0.5,
     }),
     outline: new THREE.MeshBasicMaterial({ color: CHESS_PALETTE.outline, side: THREE.BackSide }),
@@ -176,8 +176,9 @@ function knight(color: "w" | "b"): Part[] {
   const head = new THREE.ExtrudeGeometry(shape, { depth: 0.36, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.04, bevelSegments: 2, curveSegments: 4 });
   head.translate(0, 0, -0.18);
   head.scale(KNIGHT_SCALE, KNIGHT_SCALE, 1);
-  // White looks towards -z (black's side), black towards +z. rotateY(+90deg) turns +x into -z.
-  const turn = color === "w" ? Math.PI / 2 : -Math.PI / 2;
+  // Knights look towards the opponent (white towards -z, black towards +z) and a quarter-turn to the side, so the
+  // horse's profile shows from the player's seat. rotateY(+45deg) turns +x into (+x, -z).
+  const turn = color === "w" ? Math.PI / 4 : -Math.PI / 4;
   head.rotateY(turn);
   head.scale(S, S, S);
 
@@ -203,7 +204,7 @@ function partsFor(p: Piece): Part[] {
   return parts;
 }
 
-const OUTLINE_SCALE = new THREE.Vector3(1.07, 1.025, 1.07);
+const OUTLINE_SCALE = new THREE.Vector3(1.032, 1.012, 1.032);
 const SHADOW_GEO = [0.62, 0.5, 0.4].map((r) => new THREE.CircleGeometry(r, 28));
 
 /** A piece standing on the square's top surface. Set `userData.pieceSquare` on the returned group when placing it. */

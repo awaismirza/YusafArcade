@@ -86,15 +86,17 @@ export class BoardCamera {
   constructor(
     private readonly camera: THREE.PerspectiveCamera,
     private readonly height = 11.4,
-    private readonly dist = 9.4
+    private readonly dist = 9.4,
+    /** Height of the point the camera looks at. Raise it to move the board down the screen. */
+    private readonly lookY = 0
   ) {
     this.camera.position.set(0, height, dist);
-    this.camera.lookAt(0, 0, 0.35);
+    this.camera.lookAt(0, lookY, 0.35);
   }
 
   update(): void {
     this.goal.set(0, this.height, this.flipped ? -this.dist : this.dist);
     this.camera.position.lerp(this.goal, 0.09);
-    this.camera.lookAt(0, 0, this.flipped ? -0.35 : 0.35);
+    this.camera.lookAt(0, this.lookY, this.flipped ? -0.35 : 0.35);
   }
 }

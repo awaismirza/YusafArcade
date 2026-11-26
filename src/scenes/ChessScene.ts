@@ -8,7 +8,8 @@ import { Hud } from "../ui/hud";
 import { findUserData, ThreeStage } from "../ui/threeStage";
 import { BoardCamera, buildBoard8, cellX, cellZ, Markers8, TOP_Y } from "../games/shared/board8";
 import { chooseMove, Level } from "../games/chess/ai";
-import { applyMove, Color, inCheck, legalMoves, Move, outcome, Piece, PieceType, Position, positionKey, squareName, startPosition } from "../games/chess/rules";
+import { applyMove, Color, inCheck, legalMoves, Move, outcome, Position, positionKey, squareName, startPosition } from "../games/chess/rules";
+import { buildChessPiece, CHESS_PALETTE, ChessMaterials, makeChessMaterials } from "../games/chess/pieces3d";
 
 /** "easy" and "hard" play against the computer; "two" is pass-and-play on one iPad. */
 type Mode = "easy" | "hard" | "two";
@@ -19,69 +20,6 @@ const CAPTURE_MS = 380;
 
 const sqX = (i: number): number => cellX(i & 7);
 const sqZ = (i: number): number => cellZ(i >> 3);
-
-/** Lathe profiles (radius, height) for the turned pieces. */
-const PROFILES: Partial<Record<PieceType, [number, number][]>> = {
-  p: [[0, 0], [0.32, 0], [0.36, 0.08], [0.22, 0.16], [0.15, 0.32], [0.2, 0.5], [0.12, 0.62], [0.26, 0.74], [0.26, 0.8], [0.14, 0.86], [0, 0.88]],
-  r: [[0, 0], [0.34, 0], [0.36, 0.1], [0.24, 0.2], [0.22, 0.8], [0.3, 0.92], [0.3, 1.02], [0, 1.02]],
-  b: [[0, 0], [0.34, 0], [0.36, 0.1], [0.2, 0.25], [0.16, 0.5], [0.28, 0.85], [0.22, 1.0], [0.1, 1.12], [0, 1.18]],
-  q: [[0, 0], [0.34, 0], [0.36, 0.1], [0.2, 0.3], [0.18, 0.6], [0.3, 0.9], [0.34, 1.1], [0.2, 1.25], [0.1, 1.35], [0, 1.35]],
-  k: [[0, 0], [0.34, 0], [0.36, 0.1], [0.2, 0.3], [0.18, 0.6], [0.3, 0.9], [0.34, 1.1], [0.2, 1.28], [0, 1.3]],
-};
-
-function buildPiece(p: Piece, mats: { white: THREE.Material; black: THREE.Material }): THREE.Group {
-  const group = new THREE.Group();
-  const mat = p.c === "w" ? mats.white : mats.black;
-  const add = (geo: THREE.BufferGeometry, x = 0, y = 0, z = 0): THREE.Mesh => {
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.set(x, y, z);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    group.add(mesh);
-    return mesh;
-  };
-
-  if (p.t === "n") {
-    // Turned base, then a flat extruded horse head.
-    add(new THREE.LatheGeometry([new THREE.Vector2(0, 0), new THREE.Vector2(0.32, 0), new THREE.Vector2(0.34, 0.1), new THREE.Vector2(0.26, 0.18), new THREE.Vector2(0, 0.2)], 40));
-    const s = new THREE.Shape();
-    s.moveTo(-0.3, 0.1);
-    s.lineTo(0.3, 0.1);
-    s.lineTo(0.3, 0.55);
-    s.lineTo(0.22, 0.85);
-    s.lineTo(0.46, 1.05);
-    s.lineTo(0.36, 1.3);
-    s.lineTo(-0.12, 1.32);
-    s.lineTo(-0.32, 0.95);
-    s.lineTo(-0.2, 0.62);
-    s.lineTo(-0.34, 0.42);
-    s.closePath();
-    const geo = new THREE.ExtrudeGeometry(s, { depth: 0.3, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3, curveSegments: 6 });
-    geo.translate(0, 0, -0.15);
-    add(geo);
-    return group;
-  }
-
-  const profile = PROFILES[p.t]!;
-  add(new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)), 48));
-  const top = profile[profile.length - 1][1];
-
-  if (p.t === "r") {
-    for (const [x, z] of [[-0.22, -0.22], [0.22, -0.22], [-0.22, 0.22], [0.22, 0.22]]) {
-      add(new THREE.BoxGeometry(0.16, 0.26, 0.16), x, top + 0.13, z);
-    }
-  } else if (p.t === "b") {
-    add(new THREE.SphereGeometry(0.1, 20, 14), 0, top + 0.04, 0);
-  } else if (p.t === "q") {
-    add(new THREE.SphereGeometry(0.13, 20, 14), 0, top + 0.1, 0);
-  } else if (p.t === "k") {
-    add(new THREE.BoxGeometry(0.08, 0.34, 0.08), 0, top + 0.16, 0);
-    add(new THREE.BoxGeometry(0.22, 0.08, 0.08), 0, top + 0.18, 0);
-  } else if (p.t === "p") {
-    add(new THREE.SphereGeometry(0.1, 16, 12), 0, top + 0.02, 0);
-  }
-  return group;
-}
 
 export class ChessScene extends Phaser.Scene {
   private mode: Mode = "easy";
@@ -102,7 +40,7 @@ export class ChessScene extends Phaser.Scene {
   private pieceGroup = new THREE.Group();
   private markers = new Markers8();
   private camCtl: BoardCamera | null = null;
-  private mats: { white: THREE.Material; black: THREE.Material } | null = null;
+  private mats: ChessMaterials | null = null;
   private queue = new AnimQueue();
   private hud!: Hud;
   private hideMenu!: () => void;
@@ -146,7 +84,7 @@ export class ChessScene extends Phaser.Scene {
       if (!this.dead) this.scene.start("Menu");
     });
 
-    this.stage = ThreeStage.create(this, { key: TEX_KEY });
+    this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.85, backdrop: ["#33407a", "#0b0f24"] });
     this.hud = new Hud(this);
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer) => this.onPointer(pointer));
 
@@ -183,14 +121,11 @@ export class ChessScene extends Phaser.Scene {
 
   /** Builds the board, lights and camera. */
   private buildWorld(stage: ThreeStage): void {
-    const { group, squares } = buildBoard8({ light: 0xf1e4c8, dark: 0x6b4226, plinth: 0x5b3a1e });
+    const { group, squares } = buildBoard8({ light: CHESS_PALETTE.lightSquare, dark: CHESS_PALETTE.darkSquare, plinth: CHESS_PALETTE.plinth });
     this.squares = squares;
     stage.scene.add(group, this.markers.group, this.pieceGroup);
-    this.mats = {
-      white: new THREE.MeshPhysicalMaterial({ color: 0xf5efe0, roughness: 0.32, clearcoat: 0.6, clearcoatRoughness: 0.2 }),
-      black: new THREE.MeshPhysicalMaterial({ color: 0x1e2937, roughness: 0.3, clearcoat: 0.7, clearcoatRoughness: 0.15 }),
-    };
-    this.camCtl = new BoardCamera(stage.camera);
+    this.mats = makeChessMaterials();
+    this.camCtl = new BoardCamera(stage.camera, 9.8, 11.2, 0.5);
   }
 
   /** Converts a tap in game coordinates to a board square, if any. */
@@ -211,7 +146,7 @@ export class ChessScene extends Phaser.Scene {
     for (let i = 0; i < 64; i++) {
       const p = this.pos.board[i];
       if (!p) continue;
-      const g = buildPiece(p, this.mats);
+      const g = buildChessPiece(p, this.mats);
       g.position.set(sqX(i), TOP_Y, sqZ(i));
       g.userData.pieceSquare = i;
       this.pieceGroup.add(g);

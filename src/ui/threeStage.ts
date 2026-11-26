@@ -14,6 +14,8 @@ export type StageOptions = {
   backdrop?: [string, string];
   /** Directional light, with soft shadows. Default true. */
   shadows?: boolean;
+  /** Tone-mapping exposure. Lower it when bright pieces wash out. Default 1.05. */
+  exposure?: number;
 };
 
 /**
@@ -95,7 +97,7 @@ export class ThreeStage {
     renderer.shadowMap.enabled = opts.shadows !== false;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
+    renderer.toneMappingExposure = opts.exposure ?? 1.05;
 
     const flat = document.createElement("canvas");
     flat.width = STAGE_W;
