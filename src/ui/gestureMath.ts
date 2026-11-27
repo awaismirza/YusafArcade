@@ -20,7 +20,7 @@ export function tiltDelta(dyGamePx: number): number {
 
 /** A touch counts as a tap only if it was quick, stayed put, and no second finger ever joined it. */
 export function isTap(t: { downMs: number; upMs: number; moved: number; multi: boolean }): boolean {
-  return !t.multi && t.moved <= 14 && t.upMs - t.downMs <= 400;
+  return !t.multi && t.moved <= 14 && t.upMs - t.downMs <= 900;
 }
 
 /** Resolves with the promise's value, or with `fallback` if it takes longer than `ms`. */

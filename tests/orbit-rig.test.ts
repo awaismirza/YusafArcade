@@ -53,7 +53,10 @@ async function main(): Promise<void> {
     assert.equal(isTap({ downMs: 0, upMs: 120, moved: 3, multi: false }), true);
     assert.equal(isTap({ downMs: 0, upMs: 120, moved: 3, multi: true }), false, "a second finger joined");
     assert.equal(isTap({ downMs: 0, upMs: 120, moved: 20, multi: false }), false, "moved too far");
-    assert.equal(isTap({ downMs: 0, upMs: 500, moved: 3, multi: false }), false, "held too long");
+    assert.equal(isTap({ downMs: 0, upMs: 800, moved: 3, multi: false }), true, "a slow, steady press still counts");
+    assert.equal(isTap({ downMs: 0, upMs: 1000, moved: 3, multi: false }), false, "held too long");
+    assert.equal(isTap({ downMs: 0, upMs: 100, moved: 20, multi: false }), false, "a quick drag is not a tap");
+    assert.equal(isTap({ downMs: 0, upMs: 100, moved: 3, multi: true }), false, "two fingers are not a tap");
   });
 
   await check("withTimeout passes a fast result and falls back on a slow one", async () => {
