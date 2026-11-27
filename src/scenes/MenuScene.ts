@@ -51,7 +51,7 @@ const ARENA: Entry[] = [
   ["Turbo Karts 🏎️", "Race · split screen for 2", 0xdc2626, "Karts"],
   ["Bomb Blast 💣", "Up to 4 players · last one wins", 0xea580c, "Bombs"],
   ["Air Hockey 3D 🏒", "Face to face on one iPad", 0x0891b2, "Hockey"],
-  ["Tank Trouble 🛡️", "Bouncing shells in a maze", 0x4d7c0f, "Tanks"],
+  ["Tank Commander 🛡️", "20 missions · bouncing shells", 0x4d7c0f, "Tanks"],
   ["Mini Golf World ⛳", "9 holes · up to 4 players", 0x16a34a, "Golf"],
 ];
 
