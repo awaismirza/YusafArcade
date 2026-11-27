@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { hitSize } from "./hitSize";
 import { GAME_HEIGHT, GAME_WIDTH } from "../config";
 import { setTouchChrome } from "../input/touchChrome";
 import { touchPad } from "../input/touchPad";
@@ -21,7 +22,8 @@ export function addMenuButton(scene: Phaser.Scene, onMenu: () => void): () => vo
     .setOrigin(0.5)
     .setScrollFactor(0)
     .setDepth(61);
-  const zone = scene.add.rectangle(80, 42, 128, 52, 0xffffff, 0.001).setScrollFactor(0).setDepth(62).setInteractive({ useHandCursor: true });
+  const mz = hitSize(128, 52);
+  const zone = scene.add.rectangle(80, 42, mz.w, mz.h, 0xffffff, 0.001).setScrollFactor(0).setDepth(62).setInteractive({ useHandCursor: true });
   zone.on("pointerdown", onMenu);
   return () => {
     g.setVisible(false);
@@ -104,7 +106,8 @@ export function makeButton(
     })
     .setOrigin(0.5)
     .setShadow(0, 2, "rgba(0,0,0,0.28)", 0, false, true);
-  const zone = scene.add.rectangle(0, 0, w, h, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+  const hz = hitSize(w, h);
+  const zone = scene.add.rectangle(0, 0, hz.w, hz.h, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
   const container = scene.add.container(x, y, [g, text, zone]).setDepth(depth);
 
   zone.on("pointerdown", () => {
@@ -253,7 +256,8 @@ export function addDPad(scene: Phaser.Scene, onDir: (dx: number, dy: number) => 
       drawGlass(g, x, y, size - 6, size - 6, { tint: 0xffffff, alpha: down ? 0.4 : 0.18, radius: 22 });
     };
     paint(false);
-    const zone = scene.add.rectangle(x, y, size - 6, size - 6, 0xffffff, 0.001).setScrollFactor(0).setDepth(42).setInteractive();
+    const dz = hitSize(size - 6, size - 6);
+    const zone = scene.add.rectangle(x, y, dz.w, dz.h, 0xffffff, 0.001).setScrollFactor(0).setDepth(42).setInteractive();
     scene.add
       .text(x, y, label, { fontFamily: FONT, fontSize: "30px", color: "#ffffff", fontStyle: "800" })
       .setOrigin(0.5)

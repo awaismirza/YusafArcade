@@ -71,6 +71,8 @@ await withTimeout(
 );
 
 const game = new Phaser.Game(config);
+// Testing aid: with ?debug=1 in the address, scripts/audit-targets.cjs can inspect the running game.
+if (new URLSearchParams(window.location.search).get("debug") === "1") (window as unknown as { __yusaf?: Phaser.Game }).__yusaf = game;
 
 // Every scene gets the soft backdrop unless it has already set its own gradient background.
 game.events.once(Phaser.Core.Events.READY, () => {
@@ -141,6 +143,13 @@ function bindTouchControls(): void {
     "btn-flap",
     () => {
       touchPad.flapTap = true;
+    },
+    () => undefined
+  );
+  holdButton(
+    "btn-flap-menu",
+    () => {
+      touchPad.menuTap = true;
     },
     () => undefined
   );

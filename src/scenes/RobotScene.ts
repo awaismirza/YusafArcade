@@ -87,13 +87,13 @@ export class RobotScene extends Phaser.Scene {
 
     // arrow pad
     makeButton(this, 770, 300, 64, 56, "⬆️", 0x0d9488, () => this.add_(0), 28);
-    makeButton(this, 700, 362, 64, 56, "⬅️", 0x0d9488, () => this.add_(3), 28);
-    makeButton(this, 770, 362, 64, 56, "⬇️", 0x0d9488, () => this.add_(2), 28);
-    makeButton(this, 840, 362, 64, 56, "➡️", 0x0d9488, () => this.add_(1), 28);
+    makeButton(this, 700, 374, 64, 56, "⬅️", 0x0d9488, () => this.add_(3), 28);
+    makeButton(this, 770, 374, 64, 56, "⬇️", 0x0d9488, () => this.add_(2), 28);
+    makeButton(this, 840, 374, 64, 56, "➡️", 0x0d9488, () => this.add_(1), 28);
     makeButton(this, 870, 300, 64, 56, "⌫", 0x64748b, () => this.undo(), 28);
     makeButton(this, 700, 300, 64, 56, "🧹", 0x64748b, () => this.clearAll(), 28);
-    makeButton(this, 740, 440, 150, 52, "▶ Run", 0x16a34a, () => this.run(), 24);
-    makeButton(this, 900, 440, 80, 52, "↺", 0x7c3aed, () => this.resetRobot(), 28);
+    makeButton(this, 740, 452, 150, 52, "▶ Run", 0x16a34a, () => this.run(), 24);
+    makeButton(this, 900, 452, 80, 52, "↺", 0x7c3aed, () => this.resetRobot(), 28);
 
     this.input.keyboard!.on("keydown", (e: KeyboardEvent) => {
       if (this.dead || this.running) return;

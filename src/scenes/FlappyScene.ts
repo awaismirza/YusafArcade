@@ -286,6 +286,12 @@ export class FlappyScene extends Phaser.Scene {
       return;
     }
 
+    if (touchPad.menuTap) {
+      // The phone's HTML control bar has its own Menu button (the canvas one is small there).
+      touchPad.menuTap = false;
+      this.goMenu();
+      return;
+    }
     if (Phaser.Input.Keyboard.JustDown(this.flapKey)) this.flap();
     if (touchPad.flapTap) {
       touchPad.flapTap = false;

@@ -88,6 +88,17 @@
       #btn-main-menu:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, 0.28); }
       #btn-restart { background: linear-gradient(180deg, #34b45f, #15803d); }
       #btn-main-menu { background: linear-gradient(180deg, #6a7cf5, #4f46e5); }
+      #btn-flap-menu {
+        flex: 0 0 auto;
+        min-width: 110px;
+        min-height: 72px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 999px;
+        background: rgba(40, 32, 100, 0.9);
+        color: #ffffff;
+        font: 800 20px/1 Nunito, system-ui, sans-serif;
+        touch-action: manipulation;
+      }
       #btn-flap {
         flex: 1;
         max-width: 420px;
@@ -176,6 +187,7 @@
       </div>
     </div>
     <div id="flap-bar" aria-label="Flappy controls">
+      <button id="btn-flap-menu" type="button">‹ Menu</button>
       <button id="btn-flap" type="button">Flap</button>
     </div>
     <div id="end-bar" aria-label="Game over">

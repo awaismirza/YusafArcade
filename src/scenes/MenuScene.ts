@@ -90,7 +90,7 @@ export class MenuScene extends Phaser.Scene {
       const x = GAME_WIDTH / 2 + (i - (TABS.length - 1) / 2) * 184;
       const g = this.add.graphics();
       const label = this.add.text(x, 104, name, { fontFamily: FONT, fontSize: "18px", color: "#e4defc", fontStyle: "800" }).setOrigin(0.5);
-      const zone = this.add.rectangle(x, 104, 176, 56, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+      const zone = this.add.rectangle(x, 104, 176, 70, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
       zone.on("pointerdown", () => this.show(i));
       this.tabs.push({ g, label, x });
     });
