@@ -1,14 +1,15 @@
 /**
- * On screens with room around the 16:9 game (iPads in landscape), the 3D board games show their Menu and View
- * buttons, the turn label and the counter in an HTML bar above the board, and the hint in a bar below it, so
- * nothing covers the board. On phones and 16:9 screens nothing changes and the labels stay on the game.
+ * On screens with room around the 16:9 game, the 3D board games move their Menu and View buttons, the turn label,
+ * the counter, the hint and the Roll button off the board: into a bar above and a bar below it on iPads, and into a
+ * sidebar on the right on phones in landscape. On 16:9 screens nothing changes and the labels stay on the game.
  */
 import Phaser from "phaser";
-import { chromeFits } from "./boardChromeFit";
+import { chromeLayout } from "./boardChromeFit";
 
 let active = false;
 let onMenu: (() => void) | null = null;
 let onView: ((id: string) => void) | null = null;
+let onRoll: (() => void) | null = null;
 const $ = (id: string): HTMLElement | null => document.getElementById(id);
 
 function refit(): void {
@@ -22,12 +23,21 @@ function wire(): void {
   if (!menu || !view || menu.dataset.wired) return;
   menu.dataset.wired = "1";
   menu.addEventListener("click", () => onMenu?.());
+  $("bc-roll")?.addEventListener("click", () => onRoll?.());
   view.addEventListener("click", () => {
     const list = $("bc-views");
     if (!list) return;
     const r = view.getBoundingClientRect();
-    list.style.left = `${r.left}px`;
-    list.style.top = `${r.bottom + 8}px`;
+    if (document.body.classList.contains("board-side")) {
+      // beside the sidebar, from the top, so the list fits on a short phone screen
+      list.style.left = "";
+      list.style.right = `${window.innerWidth - r.left + 8}px`;
+      list.style.top = "8px";
+    } else {
+      list.style.right = "";
+      list.style.left = `${r.left}px`;
+      list.style.top = `${r.bottom + 8}px`;
+    }
     list.classList.toggle("open");
   });
 }
@@ -37,11 +47,15 @@ export const boardChrome = {
 
   /** Shows the bars if they fit. Returns a function that hides the Menu button (for the end of a game). */
   start(scene: Phaser.Scene, menu: () => void): (() => void) | null {
-    if (!chromeFits(window.innerWidth, window.innerHeight)) return null;
+    const fit = chromeLayout(window.innerWidth, window.innerHeight);
+    if (!fit) return null;
     wire();
     active = true;
     onMenu = menu;
-    document.body.classList.add("board-chrome");
+    if (fit.kind === "side") {
+      document.body.style.setProperty("--side-w", `${fit.width}px`);
+      document.body.classList.add("board-side");
+    } else document.body.classList.add("board-chrome");
     const m = $("bc-menu");
     if (m) m.style.visibility = "visible";
     const v = $("bc-view");
@@ -63,7 +77,10 @@ export const boardChrome = {
     active = false;
     onMenu = null;
     onView = null;
-    document.body.classList.remove("board-chrome");
+    onRoll = null;
+    const roll = $("bc-roll");
+    if (roll) roll.style.display = "none";
+    document.body.classList.remove("board-chrome", "board-side");
     $("bc-views")?.classList.remove("open");
     refit();
   },
@@ -88,6 +105,15 @@ export const boardChrome = {
       });
       list.appendChild(b);
     }
+  },
+
+  /** The Roll button for dice games: at the right of the bottom bar, or at the foot of the sidebar. Null when neither is shown. */
+  rollButton(roll: () => void): { container: { setVisible(v: boolean): void } } | null {
+    const b = $("bc-roll");
+    if (!active || !b) return null;
+    onRoll = roll;
+    b.style.display = "none";
+    return { container: { setVisible: (v: boolean) => void (b.style.display = v ? "block" : "none") } };
   },
 
   setText(which: "status" | "counts" | "detail", text: string): void {

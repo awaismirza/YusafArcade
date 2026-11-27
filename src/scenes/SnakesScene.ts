@@ -4,7 +4,7 @@ import { confettiRain3d } from "../games/shared/burst3d";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
-import { addMenuButton, Btn, makeButton, pollEndTaps, resetTaps, showGameOver, showModePicker } from "../ui/arcadeKit";
+import { addMenuButton, makeButton, pollEndTaps, resetTaps, showGameOver, showModePicker } from "../ui/arcadeKit";
 import { AnimQueue, easeInOut } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { ThreeStage } from "../ui/threeStage";
@@ -45,7 +45,8 @@ export class SnakesScene extends Phaser.Scene {
   private locked = new Set<number>();
   private rig: OrbitRig | null = null;
   private hud!: Hud;
-  private rollBtn: Btn | null = null;
+  /** The Roll button: on the game, in the bar under the board on iPads, or in the sidebar on phones. */
+  private rollBtn: { container: { setVisible(v: boolean): unknown } } | null = null;
   private hideMenu!: () => void;
 
   constructor() {
@@ -165,8 +166,12 @@ export class SnakesScene extends Phaser.Scene {
     this.layout(true);
     this.readyAt = this.time.now + 300;
 
-    this.rollBtn = makeButton(this, 868, 290, 168, 110, "🎲\nRoll!", 0xdc2626, () => this.onRollButton(), 30, 30);
+    this.rollBtn = boardChrome.rollButton(() => this.onRollButton()) ?? makeButton(this, 868, 290, 168, 110, "🎲\nRoll!", 0xdc2626, () => this.onRollButton(), 30, 30);
     this.rollBtn.container.setVisible(false);
+    // A tap anywhere on the board (not on a button) rolls too, when it is a person's turn to roll.
+    this.input.on("pointerup", (p: Phaser.Input.Pointer, over: Phaser.GameObjects.GameObject[]) => {
+      if (over.length === 0 && Math.hypot(p.upX - p.downX, p.upY - p.downY) < 20) this.onRollButton();
+    });
     this.beginTurn();
   }
 
@@ -379,8 +384,8 @@ export class SnakesScene extends Phaser.Scene {
       this.hud.setDetail(extra);
     } else if (this.phase === "roll") {
       const again = this.rollsThisTurn > 0 ? "  (bonus roll!)" : "";
-      const pass = this.humans.filter(Boolean).length > 1 ? "  Pass the iPad if it's not your turn." : "";
-      this.hud.setDetail(this.isHuman ? `Tap the Roll button.${again}${pass}` : "The computer is thinking…");
+      const pass = this.humans.filter(Boolean).length > 1 ? "  Pass it on if it's not your turn." : "";
+      this.hud.setDetail(this.isHuman ? `Tap Roll, or tap the board.${again}${pass}` : "The computer is thinking…");
     }
   }
 
