@@ -1,44 +1,8 @@
 import Phaser from "phaser";
-import { ChoiceGameScene, GameCfg, Round, pick, shuffle, withAnswer } from "./ChoiceGameScene";
+import { shapeRound, SHAPES } from "../games/rounds/shapes";
+import { ChoiceGameScene, GameCfg, Round, pick } from "./ChoiceGameScene";
 
-type Pt = { x: number; y: number };
-
-function regular(n: number, r: number): Pt[] {
-  return Array.from({ length: n }, (_, i) => {
-    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-    return { x: Math.cos(a) * r, y: Math.sin(a) * r };
-  });
-}
-
-function star(r: number): Pt[] {
-  return Array.from({ length: 10 }, (_, i) => {
-    const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
-    const rad = i % 2 === 0 ? r : r * 0.42;
-    return { x: Math.cos(a) * rad, y: Math.sin(a) * rad };
-  });
-}
-
-const SHAPES: Record<string, { pts?: Pt[]; circle?: boolean; fact: string; sides: number }> = {
-  Triangle: { pts: regular(3, 66), fact: "A triangle has 3 sides and 3 corners.", sides: 3 },
-  Square: { pts: [{ x: -50, y: -50 }, { x: 50, y: -50 }, { x: 50, y: 50 }, { x: -50, y: 50 }], fact: "A square has 4 equal sides.", sides: 4 },
-  Rectangle: { pts: [{ x: -75, y: -42 }, { x: 75, y: -42 }, { x: 75, y: 42 }, { x: -75, y: 42 }], fact: "A rectangle has 4 sides and 4 square corners.", sides: 4 },
-  Circle: { circle: true, fact: "A circle is round with no corners and no straight sides.", sides: 0 },
-  Pentagon: { pts: regular(5, 62), fact: "A pentagon has 5 sides.", sides: 5 },
-  Hexagon: { pts: regular(6, 62), fact: "A hexagon has 6 sides. Honeycomb cells are hexagons!", sides: 6 },
-  Heptagon: { pts: regular(7, 62), fact: "A heptagon has 7 sides.", sides: 7 },
-  Octagon: { pts: regular(8, 62), fact: "An octagon has 8 sides. A stop sign is an octagon!", sides: 8 },
-  Decagon: { pts: regular(10, 62), fact: "A decagon has 10 sides.", sides: 10 },
-  Star: { pts: star(66), fact: "This star has 10 sides and 10 corners.", sides: 10 },
-  Rhombus: { pts: [{ x: 0, y: -62 }, { x: 48, y: 0 }, { x: 0, y: 62 }, { x: -48, y: 0 }], fact: "A rhombus has 4 equal sides, like a squashed square.", sides: 4 },
-  Trapezoid: { pts: [{ x: -42, y: -40 }, { x: 42, y: -40 }, { x: 78, y: 40 }, { x: -78, y: 40 }], fact: "A trapezoid has 4 sides and exactly one pair of parallel sides.", sides: 4 },
-  Parallelogram: { pts: [{ x: -34, y: -40 }, { x: 80, y: -40 }, { x: 34, y: 40 }, { x: -80, y: 40 }], fact: "A parallelogram has 4 sides, and opposite sides are parallel.", sides: 4 },
-};
-
-const EASY = ["Triangle", "Square", "Rectangle", "Circle", "Pentagon", "Hexagon", "Star"];
-const HARD_NAMES = ["Pentagon", "Hexagon", "Heptagon", "Octagon", "Rhombus", "Trapezoid", "Parallelogram", "Decagon"];
 const COLORS = [0xf97316, 0x22c55e, 0x3b82f6, 0xec4899, 0xeab308, 0xa855f7, 0x14b8a6];
-
-const article = (name: string): string => (/^[AEIOU]/.test(name) ? "an" : "a");
 
 export class ShapesScene extends ChoiceGameScene {
   protected readonly cfg: GameCfg = {
@@ -54,17 +18,31 @@ export class ShapesScene extends ChoiceGameScene {
     super("Shapes");
   }
 
-  private drawShape(name: string): Phaser.GameObjects.GameObject[] {
-    const def = SHAPES[name];
-    const g = this.add.graphics();
+  private drawShape(kind: "flat" | "solid", name: string): Phaser.GameObjects.GameObject[] {
+    // Drawn around (0, 0) and scaled to fit the gap between the question (y 112) and the answers (y 224).
+    const g = this.add.graphics().setPosition(480, 176).setScale(0.7);
     const color = pick(COLORS);
-    const cx = 480;
-    const cy = 178;
+    const cx = 0;
+    const cy = 0;
+    if (kind === "solid") {
+      this.drawSolid(g, name, color, cx, cy);
+      return [g];
+    }
+    const def = SHAPES[name];
     g.fillStyle(color, 1);
     g.lineStyle(4, 0xffffff, 0.9);
-    if (def.circle) {
+    if (def.round === "circle") {
       g.fillCircle(cx, cy, 58);
       g.strokeCircle(cx, cy, 58);
+    } else if (def.round === "oval") {
+      g.fillEllipse(cx, cy, 150, 92);
+      g.strokeEllipse(cx, cy, 150, 92);
+    } else if (def.round === "semicircle") {
+      g.beginPath();
+      g.arc(cx, cy + 30, 70, Math.PI, 0, false);
+      g.closePath();
+      g.fillPath();
+      g.strokePath();
     } else if (def.pts) {
       const pts = def.pts.map((p) => ({ x: p.x + cx, y: p.y + cy }));
       g.fillPoints(pts, true);
@@ -73,35 +51,80 @@ export class ShapesScene extends ChoiceGameScene {
     return [g];
   }
 
-  protected makeRound(tier: 0 | 1): Round {
-    if (tier === 1 && Math.random() < 0.5) {
-      const name = pick(["Pentagon", "Hexagon", "Heptagon", "Octagon", "Decagon"]);
-      const n = SHAPES[name].sides;
-      const wrong = shuffle([n - 2, n - 1, n + 1, n + 2, n + 3].filter((v) => v >= 3)).map(String);
-      const o = withAnswer(String(n), wrong);
-      return {
-        prompt: "How many sides does this shape have?",
-        visual: () => this.drawShape(name),
-        options: o.options,
-        correct: o.correct,
-        explain: `It is ${article(name)} ${name.toLowerCase()}. ${SHAPES[name].fact}`,
-        cols: 4,
-        w: 190,
-        fontSize: 40,
-      };
-    }
-    const pool = tier === 0 ? EASY : HARD_NAMES;
-    const name = pick(pool);
-    const o = withAnswer(name, shuffle(pool));
-    return {
-      prompt: "What is the name of this shape?",
-      visual: () => this.drawShape(name),
-      options: o.options,
-      correct: o.correct,
-      explain: SHAPES[name].fact,
-      cols: 2,
-      w: 340,
-      fontSize: 30,
+  /** 3D solids drawn with three shades of the colour so they look solid. */
+  private drawSolid(g: Phaser.GameObjects.Graphics, name: string, color: number, cx: number, cy: number): void {
+    const base = Phaser.Display.Color.IntegerToColor(color);
+    const light = base.clone().lighten(22).color;
+    const dark = base.clone().darken(22).color;
+    const poly = (fill: number, pts: [number, number][]): void => {
+      const p = pts.map(([x, y]) => ({ x: cx + x, y: cy + y }));
+      g.fillStyle(fill, 1);
+      g.fillPoints(p, true);
+      g.lineStyle(3, 0xffffff, 0.85);
+      g.strokePoints(p, true);
     };
+    const box = (w: number, h: number, d: number): void => {
+      const x0 = -w / 2 - d / 4;
+      const y0 = -h / 2 + d / 4;
+      poly(color, [[x0, y0], [x0 + w, y0], [x0 + w, y0 + h], [x0, y0 + h]]);
+      poly(light, [[x0, y0], [x0 + d / 2, y0 - d / 2], [x0 + w + d / 2, y0 - d / 2], [x0 + w, y0]]);
+      poly(dark, [[x0 + w, y0], [x0 + w + d / 2, y0 - d / 2], [x0 + w + d / 2, y0 + h - d / 2], [x0 + w, y0 + h]]);
+    };
+    g.lineStyle(3, 0xffffff, 0.85);
+    switch (name) {
+      case "Cube":
+        box(92, 92, 64);
+        break;
+      case "Cuboid":
+        box(150, 74, 56);
+        break;
+      case "Pyramid":
+        poly(dark, [[-70, 50], [20, 70], [0, -70]]);
+        poly(color, [[20, 70], [80, 36], [0, -70]]);
+        break;
+      case "Triangular prism":
+        poly(color, [[-80, 50], [40, 50], [40, -10], [-80, -10]]);
+        poly(light, [[-80, -10], [40, -10], [70, -60], [-50, -60]]);
+        poly(dark, [[40, 50], [100, 0], [70, -60], [40, -10]]);
+        break;
+      case "Cylinder":
+        g.fillStyle(color, 1);
+        g.fillRect(cx - 55, cy - 50, 110, 100);
+        g.fillEllipse(cx, cy + 50, 110, 34);
+        g.lineStyle(3, 0xffffff, 0.85);
+        g.lineBetween(cx - 55, cy - 50, cx - 55, cy + 50);
+        g.lineBetween(cx + 55, cy - 50, cx + 55, cy + 50);
+        g.beginPath();
+        g.arc(cx, cy + 50, 55, 0, Math.PI, false);
+        g.strokePath();
+        g.fillStyle(light, 1);
+        g.fillEllipse(cx, cy - 50, 110, 34);
+        g.strokeEllipse(cx, cy - 50, 110, 34);
+        break;
+      case "Cone":
+        g.fillStyle(color, 1);
+        g.fillEllipse(cx, cy + 48, 120, 36);
+        poly(color, [[-60, 48], [60, 48], [0, -72]]);
+        g.fillStyle(light, 1);
+        g.fillEllipse(cx, cy + 48, 120, 36);
+        g.strokeEllipse(cx, cy + 48, 120, 36);
+        break;
+      default: {
+        // Sphere: a ball with a soft highlight.
+        g.fillStyle(dark, 1);
+        g.fillCircle(cx, cy, 66);
+        g.fillStyle(color, 1);
+        g.fillCircle(cx - 8, cy - 8, 56);
+        g.fillStyle(light, 1);
+        g.fillCircle(cx - 22, cy - 24, 22);
+        g.fillStyle(0xffffff, 0.7);
+        g.fillCircle(cx - 28, cy - 30, 8);
+      }
+    }
+  }
+
+  protected makeRound(tier: 0 | 1): Round {
+    const r = shapeRound(tier, Math.random);
+    return { ...r, visual: () => this.drawShape(r.drawing.kind, r.drawing.name) };
   }
 }

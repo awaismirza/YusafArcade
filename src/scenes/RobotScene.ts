@@ -3,6 +3,7 @@ import { setGradientBackground } from "../ui/background";
 import { addChip, Chip } from "../ui/chips";
 import { PALETTES } from "../ui/palettes";
 import { RoundTile } from "../ui/roundTile";
+import { LEVEL_COUNT, makeLevel } from "../games/robot/levels";
 import { GAME_WIDTH } from "../config";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -12,7 +13,7 @@ type Dir = 0 | 1 | 2 | 3; // up, right, down, left
 const DX = [0, 1, 0, -1];
 const DY = [-1, 0, 1, 0];
 const ARROWS = ["⬆️", "➡️", "⬇️", "⬅️"];
-const LEVELS = 5;
+const LEVELS = LEVEL_COUNT;
 const MAX_SLOTS = 12;
 
 type Pt = { x: number; y: number };
@@ -108,7 +109,7 @@ export class RobotScene extends Phaser.Scene {
       if (!this.dead) this.scene.start("Menu");
     });
 
-    showLevelPicker(this, "Code the Robot 🤖", "Give the robot step-by-step arrow commands.\nAvoid the rocks and reach the star!", (tier) => {
+    showLevelPicker(this, "Code the Robot 🤖", "Give the robot step-by-step arrow commands.\nAvoid the rocks and reach the star in 12 levels!", (tier) => {
       this.tier = tier;
       this.size = tier === 0 ? 5 : 6;
       this.cs = tier === 0 ? 64 : 62;
@@ -131,24 +132,6 @@ export class RobotScene extends Phaser.Scene {
     return p.x >= 0 && p.y >= 0 && p.x < this.size && p.y < this.size;
   }
 
-  /** Random self-avoiding walk from start. Returns the visited cells or null. */
-  private walk(length: number): Pt[] | null {
-    const start = { x: Phaser.Math.Between(0, this.size - 1), y: Phaser.Math.Between(0, this.size - 1) };
-    const path = [start];
-    const seen = new Set([this.key(start)]);
-    while (path.length <= length) {
-      const last = path[path.length - 1];
-      const options = ([0, 1, 2, 3] as Dir[])
-        .map((d) => ({ x: last.x + DX[d], y: last.y + DY[d] }))
-        .filter((p) => this.inside(p) && !seen.has(this.key(p)));
-      if (options.length === 0) return null;
-      const next = Phaser.Utils.Array.GetRandom(options);
-      path.push(next);
-      seen.add(this.key(next));
-    }
-    return path;
-  }
-
   private nextLevel(): void {
     this.levelObjs.forEach((o) => o.destroy());
     this.levelObjs = [];
@@ -163,24 +146,13 @@ export class RobotScene extends Phaser.Scene {
     this.running = false;
     this.msg.setText("");
 
-    const length = this.tier === 0 ? 2 + this.level : 4 + this.level;
-    let path: Pt[] | null = null;
-    for (let i = 0; i < 300 && !path; i++) path = this.walk(length);
-    if (!path) path = this.walk(3) as Pt[];
-    this.start = path[0];
-    this.goal = path[path.length - 1];
-    this.pathLen = path.length - 1;
-    this.maxCmds = Math.min(MAX_SLOTS, this.pathLen + (this.tier === 0 ? 4 : 3));
+    const lv = makeLevel(this.tier, this.level, this.size, Math.random);
+    this.start = lv.start;
+    this.goal = lv.goal;
+    this.pathLen = lv.shortest;
+    this.maxCmds = lv.maxCmds;
+    this.walls = new Set(lv.walls);
     this.limitText.setText(`Use up to ${this.maxCmds} commands`);
-
-    const onPath = new Set(path.map((p) => this.key(p)));
-    this.walls = new Set();
-    const wallCount = this.tier === 0 ? 2 + this.level : 5 + this.level * 2;
-    let guard = 0;
-    while (this.walls.size < wallCount && guard++ < 400) {
-      const p = { x: Phaser.Math.Between(0, this.size - 1), y: Phaser.Math.Between(0, this.size - 1) };
-      if (!onPath.has(this.key(p))) this.walls.add(this.key(p));
-    }
 
     for (let y = 0; y < this.size; y++) {
       for (let x = 0; x < this.size; x++) {
