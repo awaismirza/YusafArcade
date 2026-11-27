@@ -47,11 +47,20 @@ const BOARD: Entry[] = [
   ["Snakes & Ladders 🐍", "Climb ladders · dodge snakes", 0x0f766e, "Snakes"],
 ];
 
+const ARENA: Entry[] = [
+  ["Turbo Karts 🏎️", "Race · split screen for 2", 0xdc2626, "Karts"],
+  ["Bomb Blast 💣", "Up to 4 players · last one wins", 0xea580c, "Bombs"],
+  ["Air Hockey 3D 🏒", "Face to face on one iPad", 0x0891b2, "Hockey"],
+  ["Tank Trouble 🛡️", "Bouncing shells in a maze", 0x4d7c0f, "Tanks"],
+  ["Mini Golf World ⛳", "9 holes · up to 4 players", 0x16a34a, "Golf"],
+];
+
 const TABS: { name: string; note: string; games: Entry[] }[] = [
   { name: "🎮 Arcade", note: "", games: ARCADE },
   { name: "🧠 Learn", note: "Learning games for ages 7–10 · pick Easy or Challenge", games: LEARN },
   { name: "🧩 Puzzles", note: "Brain puzzles for ages 7–10 · pick Easy or Challenge", games: PUZZLES },
   { name: "🎲 Board Games", note: "Classic board games · vs the computer or 2 players on one iPad", games: BOARD },
+  { name: "🏆 3D Arena", note: "Big 3D games · vs the computer or friends on the same device", games: ARENA },
 ];
 
 let lastTab = 0;
@@ -77,11 +86,11 @@ export class MenuScene extends Phaser.Scene {
       .setShadow(0, 3, "rgba(20,10,60,0.45)", 6, false, true);
 
     TABS.forEach(({ name }, i) => {
-      // Spread the tabs evenly around the centre, so four tabs still fit the 960px width.
-      const x = GAME_WIDTH / 2 + (i - (TABS.length - 1) / 2) * 204;
+      // Spread the tabs evenly around the centre, so five tabs still fit the 960px width.
+      const x = GAME_WIDTH / 2 + (i - (TABS.length - 1) / 2) * 184;
       const g = this.add.graphics();
-      const label = this.add.text(x, 104, name, { fontFamily: FONT, fontSize: "20px", color: "#e4defc", fontStyle: "800" }).setOrigin(0.5);
-      const zone = this.add.rectangle(x, 104, 192, 56, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
+      const label = this.add.text(x, 104, name, { fontFamily: FONT, fontSize: "18px", color: "#e4defc", fontStyle: "800" }).setOrigin(0.5);
+      const zone = this.add.rectangle(x, 104, 176, 56, 0xffffff, 0.001).setInteractive({ useHandCursor: true });
       zone.on("pointerdown", () => this.show(i));
       this.tabs.push({ g, label, x });
     });
@@ -100,8 +109,8 @@ export class MenuScene extends Phaser.Scene {
     this.content = [];
     this.tabs.forEach((t, i) => {
       t.g.clear();
-      if (i === tab) drawPill(t.g, t.x, 104, 186, 48, ACCENT.purple, { radius: 22 });
-      else drawGlass(t.g, t.x, 104, 186, 48, { tint: 0xffffff, alpha: 0.12, radius: 22 });
+      if (i === tab) drawPill(t.g, t.x, 104, 172, 48, ACCENT.purple, { radius: 22 });
+      else drawGlass(t.g, t.x, 104, 172, 48, { tint: 0xffffff, alpha: 0.12, radius: 22 });
       t.label.setColor(i === tab ? "#ffffff" : "#d6cef7");
     });
 
