@@ -1,6 +1,7 @@
 // Opens a 3D Arena game, picks a mode by button text, plays for a while, saves a screenshot.
 //
 // usage: node scripts/arena-shot.cjs <out.png> [--ipad | --phone] <Game> "<mode button text>" [waitMs] [keys]
+//   mode: one button text, or several separated by | (clicked in turn)
 //   Game: Karts | Bombs | Hockey | Tanks | Golf
 //   keys: optional comma list of key codes held during the wait, e.g. "KeyW,Space"
 // Start the site first: npx vite preview --port 4173 --strictPort
@@ -37,8 +38,10 @@ const TILES = { Karts: [170, 214], Bombs: [480, 214], Hockey: [790, 214], Tanks:
   await page.waitForTimeout(500);
   await tap(...TILES[game]);
   await page.waitForTimeout(2500);
-  if (mode) {
-    await page.getByText(mode, { exact: false }).first().click();
+  // "A|B" clicks button A, then button B (e.g. a mode, then a track).
+  for (const label of mode ? mode.split("|") : []) {
+    await page.getByText(label, { exact: false }).first().click();
+    await page.waitForTimeout(600);
   }
   const keys = keyList ? keyList.split(",") : [];
   for (const k of keys) await page.keyboard.down(k);
