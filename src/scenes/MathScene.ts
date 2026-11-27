@@ -7,6 +7,7 @@ import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
 import { addMenuButton, FONT, getBest, saveBest, pollEndTaps, resetTaps, showGameOver, showLevelPicker } from "../ui/arcadeKit";
 import { ChoiceBoard } from "../ui/choiceBoard";
+import { mathQuestion } from "../games/rounds/mathWords";
 
 const GOAL = 15;
 const MAX_LEVEL = 6;
@@ -14,63 +15,8 @@ const TRACK_X0 = 80;
 const TRACK_X1 = GAME_WIDTH - 80;
 const TRACK_Y = 492;
 
-type Q = { text: string; answer: number };
-
 function rnd(a: number, b: number): number {
   return Phaser.Math.Between(a, b);
-}
-
-function makeQuestion(level: number): Q {
-  switch (level) {
-    case 1: {
-      const a = rnd(2, 12);
-      const b = rnd(2, 12);
-      return Math.random() < 0.5 ? { text: `${a} + ${b} = ?`, answer: a + b } : { text: `${a + b} − ${a} = ?`, answer: b };
-    }
-    case 2: {
-      if (Math.random() < 0.5) {
-        const a = rnd(12, 80);
-        const b = rnd(11, 99 - a);
-        return { text: `${a} + ${b} = ?`, answer: a + b };
-      }
-      const a = rnd(30, 99);
-      const b = rnd(11, a - 1);
-      return { text: `${a} − ${b} = ?`, answer: a - b };
-    }
-    case 3: {
-      const a = rnd(2, 10);
-      const b = rnd(2, 10);
-      return { text: `${a} × ${b} = ?`, answer: a * b };
-    }
-    case 4: {
-      if (Math.random() < 0.5) {
-        const b = rnd(2, 10);
-        const q = rnd(2, 10);
-        return { text: `${b * q} ÷ ${b} = ?`, answer: q };
-      }
-      const a = rnd(6, 12);
-      const b = rnd(6, 12);
-      return { text: `${a} × ${b} = ?`, answer: a * b };
-    }
-    case 5: {
-      if (Math.random() < 0.5) {
-        const x = rnd(5, 60);
-        const a = rnd(5, 40);
-        return { text: `□ + ${a} = ${x + a}`, answer: x };
-      }
-      const a = rnd(2, 9);
-      const x = rnd(2, 10);
-      return { text: `${a} × □ = ${a * x}`, answer: x };
-    }
-    default: {
-      const a = rnd(2, 20);
-      const b = rnd(2, 9);
-      const c = rnd(2, 9);
-      return Math.random() < 0.5
-        ? { text: `${a} + ${b} × ${c} = ?`, answer: a + b * c }
-        : { text: `(${a} + ${b}) × ${c} = ?`, answer: (a + b) * c };
-    }
-  }
 }
 
 export class MathScene extends Phaser.Scene {
@@ -136,7 +82,7 @@ export class MathScene extends Phaser.Scene {
     this.livesText = addChip(this, GAME_WIDTH - 100, 80, { width: 140 });
     this.add.rectangle(GAME_WIDTH / 2, 88, 600, 12, 0x1e293b).setDepth(2);
     this.bar = this.add.rectangle(GAME_WIDTH / 2 - 300, 88, 600, 12, 0x22c55e).setOrigin(0, 0.5).setDepth(3);
-    this.qText = this.add.text(GAME_WIDTH / 2, 170, "", { fontFamily: FONT, fontSize: "64px", color: "#ffffff", fontStyle: "700" }).setOrigin(0.5);
+    this.qText = this.add.text(GAME_WIDTH / 2, 170, "", { fontFamily: FONT, fontSize: "64px", color: "#ffffff", fontStyle: "700", align: "center", wordWrap: { width: 820 } }).setOrigin(0.5);
     this.msgText = this.add.text(GAME_WIDTH / 2, 420, "", { fontFamily: FONT, fontSize: "22px", color: "#fde047" }).setOrigin(0.5);
 
     this.board = new ChoiceBoard(this, GAME_WIDTH / 2, 265, 2, 380, 76);
@@ -174,14 +120,16 @@ export class MathScene extends Phaser.Scene {
 
   private nextQuestion(): void {
     this.msgText.setText("");
-    const q = makeQuestion(this.level);
-    this.qText.setText(q.text);
+    const q = mathQuestion(this.level, Math.random);
+    // Word problems are longer: smaller text that wraps onto two lines.
+    const word = !q.text.includes("=");
+    this.qText.setFontSize(word ? 34 : 64).setText(q.text);
     const { opts, correct } = this.options(q.answer);
     this.limit = this.level >= 5 ? 22000 : 15000;
     this.answered = false;
     this.ready = true;
     this.qStart = this.time.now;
-    this.solution = q.text.replace("?", String(q.answer)).replace("□", String(q.answer));
+    this.solution = word ? `${q.text} ${q.answer}` : q.text.replace("?", String(q.answer)).replace("□", String(q.answer));
     this.board.show(opts, correct, (ok) => this.onAnswer(ok, this.solution), 34);
   }
 

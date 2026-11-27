@@ -8,82 +8,12 @@ import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
 import { addMenuButton, Btn, FONT, makeButton, pollEndTaps, resetTaps, showGameOver, showLevelPicker } from "../ui/arcadeKit";
 import { ChoiceBoard } from "../ui/choiceBoard";
+import { EMOJI, numberSequence, shapeSequence } from "../games/rounds/pattern";
 
 const ROUNDS = 10;
 
-type Seq = { terms: number[]; rule: string };
-
 function rnd(a: number, b: number): number {
   return Phaser.Math.Between(a, b);
-}
-
-function numberSequence(tier: number): Seq {
-  const easy: (() => Seq)[] = [
-    () => {
-      const k = rnd(2, 5);
-      const s = rnd(1, 10);
-      return { terms: Array.from({ length: 6 }, (_, i) => s + k * i), rule: `Add ${k} each time` };
-    },
-    () => {
-      const k = rnd(2, 5);
-      const s = rnd(30, 50);
-      return { terms: Array.from({ length: 6 }, (_, i) => s - k * i), rule: `Subtract ${k} each time` };
-    },
-    () => {
-      const k = Phaser.Utils.Array.GetRandom([5, 10]);
-      return { terms: Array.from({ length: 6 }, (_, i) => k * (i + 1)), rule: `Count by ${k}s` };
-    },
-    () => {
-      const s = rnd(1, 3);
-      return { terms: Array.from({ length: 6 }, (_, i) => s * 2 ** i), rule: "Double each time (× 2)" };
-    },
-  ];
-  const hard: (() => Seq)[] = [
-    () => {
-      const s = rnd(1, 3);
-      return { terms: Array.from({ length: 6 }, (_, i) => s * 3 ** i), rule: "Multiply by 3 each time" };
-    },
-    () => {
-      const o = rnd(0, 3);
-      return { terms: Array.from({ length: 6 }, (_, i) => (i + 1 + o) ** 2), rule: "Square numbers (1×1, 2×2, 3×3 …)" };
-    },
-    () => ({ terms: [1, 3, 6, 10, 15, 21], rule: "Triangular numbers: add 2, then 3, then 4 …" }),
-    () => {
-      const a = rnd(1, 4);
-      const b = rnd(2, 6);
-      const t = [a, b];
-      for (let i = 2; i < 6; i++) t.push(t[i - 1] + t[i - 2]);
-      return { terms: t, rule: "Fibonacci-style: add the two numbers before" };
-    },
-    () => {
-      const a = rnd(2, 5);
-      const b = rnd(6, 9);
-      const t = [rnd(1, 9)];
-      for (let i = 1; i < 6; i++) t.push(t[i - 1] + (i % 2 === 1 ? a : b));
-      return { terms: t, rule: `Alternately add ${a} and ${b}` };
-    },
-    () => {
-      const s = rnd(1, 6);
-      const t = [s];
-      for (let i = 1; i < 6; i++) t.push(t[i - 1] + i);
-      return { terms: t, rule: "The jump grows: +1, +2, +3, +4 …" };
-    },
-    () => ({ terms: [1, 2, 4, 8, 16, 32], rule: "Powers of 2: double each time" }),
-  ];
-  const pool = tier === 0 ? easy : [...easy.slice(0, 2), ...hard];
-  return Phaser.Utils.Array.GetRandom(pool)();
-}
-
-const EMOJI = ["🔴", "🔵", "🟡", "🟢", "🟣", "🟠", "⭐", "🔺", "🔷", "❤️"];
-
-function shapeSequence(tier: number): { items: string[]; unit: string[] } {
-  const patterns = tier === 0 ? ["AB", "AAB", "ABB", "ABC"] : ["AABB", "ABCB", "ABAC", "AABC", "ABCD"];
-  const p = Phaser.Utils.Array.GetRandom(patterns);
-  const letters = [...new Set(p.split(""))];
-  const symbols = Phaser.Utils.Array.Shuffle([...EMOJI]).slice(0, letters.length);
-  const unit = p.split("").map((ch) => symbols[letters.indexOf(ch)]);
-  const items = Array.from({ length: 8 }, (_, i) => unit[i % unit.length]);
-  return { items, unit };
 }
 
 export class PatternScene extends Phaser.Scene {
@@ -176,7 +106,7 @@ export class PatternScene extends Phaser.Scene {
     let fontSize = 34;
 
     if (numberMode) {
-      const { terms, rule } = numberSequence(this.tier);
+      const { terms, rule } = numberSequence(this.tier as 0 | 1, Math.random);
       const shownTerms = terms.slice(0, 5);
       const answer = terms[5];
       const startX = GAME_WIDTH / 2 - (shownTerms.length * 104) / 2 + 52 - 52;
@@ -193,7 +123,7 @@ export class PatternScene extends Phaser.Scene {
       correct = vals.indexOf(answer);
       explain = `Rule: ${rule}. The answer is ${answer}.`;
     } else {
-      const { items, unit } = shapeSequence(this.tier);
+      const { items, unit } = shapeSequence(this.tier as 0 | 1, Math.random);
       const shownItems = items.slice(0, 7);
       const answer = items[7];
       const startX = GAME_WIDTH / 2 - (8 * 100) / 2 + 50;
