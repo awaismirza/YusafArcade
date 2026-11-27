@@ -71,7 +71,7 @@ test("odd-one-out pools do not share items (so there is only one right answer)",
 });
 
 test("banks meet their size targets", () => {
-  ok(QUIZ_EASY.length >= 140, `quiz easy ${QUIZ_EASY.length}`);
+  ok(QUIZ_EASY.length >= 150, `quiz easy ${QUIZ_EASY.length}`);
   ok(QUIZ_HARD.length >= 80, `quiz hard ${QUIZ_HARD.length}`);
   ok(EASY_WORDS.length >= 60, `easy words ${EASY_WORDS.length}`);
   ok(HARD_WORDS.length >= 60, `hard words ${HARD_WORDS.length}`);

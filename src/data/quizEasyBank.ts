@@ -146,4 +146,17 @@ export const EASY_MORE: QA[] = [
   ["🐦", "What covers a bird's body?", "Feathers", ["Fur", "Scales", "Shells"], "Feathers keep birds warm and help them fly."],
   ["🐟", "What covers most fish?", "Scales", ["Fur", "Feathers", "Wool"], "Scales protect a fish's body."],
   ["🐰", "Which animal hops and has long ears?", "Rabbit", ["Snake", "Fish", "Cow"], "Rabbits live in burrows underground."],
+  // Festivals, everyday life and nature
+  ["🪔", "Which festival is called the festival of lights?", "Diwali", ["Eid", "Christmas", "Holi"], "During Diwali, families light little oil lamps called diyas."],
+  ["🌙", "Which festival ends the month of fasting for Muslims?", "Eid", ["Diwali", "Easter", "Holi"], "Eid al-Fitr comes after Ramadan, with new clothes, sweets and visits to family."],
+  ["🥣", "What do we call the first meal of the day?", "Breakfast", ["Lunch", "Dinner", "Supper"], "Breakfast gives you energy for the morning."],
+  ["🐕", "Which animal is known as man's best friend?", "Dog", ["Cat", "Goldfish", "Parrot"], "People and dogs have lived together for thousands of years."],
+  ["🎨", "Which colour do you get by mixing red and white?", "Pink", ["Purple", "Orange", "Brown"], "Adding white to a colour makes it lighter."],
+  ["🔥", "What is the opposite of hot?", "Cold", ["Warm", "Wet", "Fast"], "Opposites are words that mean completely different things."],
+  ["☀️", "Which planet is the closest to the Sun?", "Mercury", ["Earth", "Mars", "Neptune"], "Mercury is the smallest planet and goes round the Sun in just 88 days."],
+  ["🚲", "How many wheels does a bicycle have?", "2", ["3", "4", "1"], "'Bi' means two, so a bicycle has two wheels."],
+  ["🧊", "What do we call a house made of snow and ice?", "Igloo", ["Tent", "Hut", "Castle"], "The inside of an igloo stays much warmer than the freezing air outside."],
+  ["🌷", "Which season comes after winter?", "Spring", ["Summer", "Autumn", "Winter again"], "In spring, flowers bloom and many baby animals are born."],
+  ["🐋", "What is the name of the biggest mammal in the sea?", "Blue whale", ["Shark", "Dolphin", "Octopus"], "A blue whale is bigger than any dinosaur ever was."],
+  ["🦎", "Which animal can change colour to hide?", "Chameleon", ["Elephant", "Penguin", "Horse"], "Chameleons change colour to hide and to show how they feel."],
 ];
