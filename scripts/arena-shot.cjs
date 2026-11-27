@@ -21,7 +21,7 @@ const TILES = { Karts: [170, 214], Bombs: [480, 214], Hockey: [790, 214], Tanks:
   page.on("console", (m) => {
     if (m.type() === "error" && !/404/.test(m.text())) errors.push("CONSOLE " + m.text());
   });
-  await page.goto("http://localhost:4173/YusafArcade/", { waitUntil: "networkidle" });
+  await page.goto("http://localhost:4173/YusafArcade/" + (process.env.QS || ""), { waitUntil: "networkidle" });
   await page.waitForTimeout(1500);
   const vp = page.viewportSize();
   const scale = Math.min(vp.width / 960, vp.height / 540);
