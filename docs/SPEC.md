@@ -10,14 +10,14 @@ A collection of learning games and classic board games for a child (ages 7–10)
 
 ### 2.1 Target devices
 
-Yusaf Arcade is a **browser-based game for mobile browsers only**: it runs in the browser, with no native app and no install. Desktop browsers are not a target; they are used only for development and testing.
+Yusaf Arcade is a **browser-based game, mobile first**: it runs in the browser, with no native app and no install. iPad is the main device; phones in landscape must work; desktop browsers are supported too (keyboard and mouse), since 2026-11-27.
 
 | Device | Browser | Priority |
 | --- | --- | --- |
 | iPad (iPadOS 16+) | Safari | **Required** |
 | iPad (iPadOS 16+) | Chrome (WebKit engine) | **Required** |
 | Phones (iOS and Android), landscape | Safari, Chrome | **Required**: must be playable at phone-landscape size |
-| Desktop | Any | Not a target (development and testing only) |
+| Desktop | Chrome, Safari, Edge, Firefox | Supported: keyboard and mouse (every 3D Arena game has keys for each local player) |
 
 Safari on iPadOS uses WebKit for every browser, so test with WebKit or with the device emulation in Chromium. `scripts/shot.cjs` has `--ipad` and `--phone` modes that use real touch taps.
 
@@ -99,12 +99,28 @@ Rules for local multiplayer:
 | Chess | Board Games | Live. Computer (Easy, Challenge) and two-player. | Full-screen 3D board. Castling, en passant, promotion (auto-queen in play), check, checkmate, stalemate, 50-move and repetition draws. Rules tested with standard perft counts. |
 | Ludo | Board Games | Live. 1 player vs computer, or 2–4 players on one iPad. | Raised 3D board (rounded tiles, chunky yard trays, embossed stars, centre wedges), landing squash, confetti when a token gets home, a ring where a token is captured, and a pulse on the current start square. Choose 1, 2 or 3 dice. Dice shake and toss onto the board. A 6 brings a token out and earns a bonus roll (up to 3 rolls in a turn). Land on a lone opponent off a safe square to send it home. Exact roll to finish. |
 | Snakes & Ladders | Board Games | Live. 1 player vs computer, or 2–4 players on one iPad. | 3D board with 10 snakes and 9 ladders. Choose 1, 2 or 3 dice (total is moved). A 6 on one die, or doubles on several, earns a bonus roll. Overshooting 100 bounces back. |
+| Turbo Karts | 3D Arena | Live. 1 player vs 3 computers (Easy, Fast), or 2 players split screen (with or without 2 computers). | Kart racer on 3 tracks (Sunny Circuit, Desert Dash, Snowy Peaks), 3 laps, boost pads, item boxes (rocket boost, banana), minimap, players start at the back of the grid. Karts drive forward on their own; touch steers with ◀ ▶. |
+| Bomb Blast | 3D Arena | Live. 1 player vs 1 or 3 computers, 2 players (+2 computers), or 4 players. | Bomberman-style 13×11 arena: pillars, crates, power-ups (extra bomb, bigger blast, speed), chain reactions. Last one standing wins a round; first to 3 rounds. |
+| Air Hockey 3D | 3D Arena | Live. 1 player vs computer (Easy, Medium, Hard) or 2 players face to face. | Neon table; each finger drives the paddle on its own half. First to 7. |
+| Tank Trouble | 3D Arena | Live. 1 player vs computer (Easy, Hard), 2 players (+1 computer), or 3 players. | Random maze each round; shells bounce off walls and can hit their owner. First to 5 points. |
+| Mini Golf World | 3D Arena | Live. Practice, vs computer, or 2–4 players passing the device. | 9 holes (windmill, hill, bumpers, water bridge, sliding gates, sand). Drag back to aim and putt; scorecard after each hole. |
 | Other arcade, learn and puzzle games | Arcade / Learn / Puzzles | Live | Brought to this spec as they are changed. |
 
 ### Shared Soft Glass UI and question data
 
 - `src/ui/palettes.ts` (per-game gradient), `background.ts`, `chips.ts` (HUD pills), `progress.ts`, `tiles.ts`, `roundTile.ts` (rounded tile that behaves like a Phaser Rectangle), `fx.ts` (`confetti`, `popText`, `winBurst`).
 - Question banks live in `src/data/` (`quizBank.ts`, `quizEasyBank.ts`, `wordBank.ts`, `countries.ts`, `oddPools.ts`). `validate.ts` checks every entry and `pickRounds.ts` picks distinct rounds. `tests/questions.test.ts` enforces validity, no duplicates and minimum sizes; `node scripts/audit-questions.mjs` prints the counts.
+
+### 3D Arena kit
+
+The 3D Arena games are full-screen three.js apps (the Solar Explorer pattern), started by one small Phaser scene each (`src/scenes/ArenaScenes.ts`) and loaded only when chosen.
+
+- `src/arena/kit/shell.ts`: renderer, resize, frame loop with a clamped time step, pause when the tab is hidden, full clean-up on exit.
+- `src/arena/kit/ui.ts`: Soft Glass HTML picker, game-over card, HUD chips, toasts, the Menu button, player colours and names.
+- `src/arena/kit/controls.ts`: multi-touch joystick and buttons (each follows only its own finger) and keyboard maps per player (Red W A S D + Space, Blue arrows + Enter, Green I J K L + O, Yellow numpad).
+- `src/arena/kit/three.ts` and `math.ts`: lights, gradient sky, confetti, disposal, and pure maths helpers.
+- Each game keeps its rules or physics in a pure module (`src/arena/<game>/rules.ts`, `physics.ts`, `track.ts`, `course.ts`) with tests in `tests/`, including simulations that check computer players finish rounds and every golf hole can be completed.
+- `node scripts/arena-shot.cjs <out.png> [--ipad|--phone] <Game> "<mode>|<track>" [ms] [keys]` opens a game in headless Chromium and saves a screenshot. Mini Golf accepts `?golfHole=N` to start on a given hole (a testing aid).
 
 ### Shared 3D building blocks
 
