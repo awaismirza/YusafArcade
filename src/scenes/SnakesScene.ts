@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { winBurst } from "../ui/fx";
+import { confettiRain3d } from "../games/shared/burst3d";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -336,6 +337,12 @@ export class SnakesScene extends Phaser.Scene {
     this.beginTurn();
   }
 
+  /** Win celebration: confetti falling over the 3D board (a 2D burst if there is no 3D view). */
+  private winConfetti(): void {
+    if (this.stage) confettiRain3d(this.stage.scene, this.queue, this.time.now, new THREE.Vector3(0, 0, 0), [0xfacc15, 0xff7ab8, 0x60a5fa, 0x34d399, 0xffffff]);
+    else winBurst(this);
+  }
+
   private finish(color: number): void {
     this.phase = "over";
     this.rollBtn?.container.setVisible(false);
@@ -346,8 +353,9 @@ export class SnakesScene extends Phaser.Scene {
     gameAudio.coin();
     const human = this.humans[this.seats.indexOf(color)];
     const title = human ? `${COLOR_NAMES[color]} wins! 🎉` : `${COLOR_NAMES[color]} (computer) wins`;
-    if (human) this.time.delayedCall(700, () => winBurst(this));
-    this.time.delayedCall(700, () => showGameOver(this, "Reached square 100!", () => this.scene.restart(), () => this.scene.start("Menu"), title));
+    // A win: confetti first, then the card (the card's scrim would dim the 3D confetti).
+    if (human) this.winConfetti();
+    this.time.delayedCall(human ? 1700 : 700, () => showGameOver(this, "Reached square 100!", () => this.scene.restart(), () => this.scene.start("Menu"), title));
   }
 
   private updateHud(extra?: string): void {

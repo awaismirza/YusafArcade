@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { winBurst } from "../ui/fx";
+import { burst3d, confettiRain3d, ringPulse3d } from "../games/shared/burst3d";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -482,60 +483,12 @@ export class LudoScene extends Phaser.Scene {
 
   /** A burst of little coloured confetti pieces that fly up, fall and fade. */
   private burst(at: THREE.Vector3, color: number): void {
-    const stage = this.stage;
-    if (!stage) return;
-    const geo = new THREE.SphereGeometry(0.07, 8, 6);
-    const palette = [color, 0xffffff, 0xfacc15, 0xff7ab8, 0x60a5fa];
-    const bits = Array.from({ length: 22 }, (_, i) => {
-      const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: palette[i % palette.length], transparent: true }));
-      const a = Math.random() * Math.PI * 2;
-      const sp = 1.2 + Math.random() * 1.8;
-      m.position.copy(at);
-      stage.scene.add(m);
-      return { m, v: new THREE.Vector3(Math.cos(a) * sp, 2.6 + Math.random() * 2, Math.sin(a) * sp) };
-    });
-    this.queue.add(this.time.now, {
-      dur: 1100,
-      update: (p) => {
-        const t = p * 1.1;
-        for (const { m, v } of bits) {
-          m.position.set(at.x + v.x * t, at.y + v.y * t - 4.9 * t * t, at.z + v.z * t);
-          (m.material as THREE.MeshBasicMaterial).opacity = 1 - p;
-          m.scale.setScalar(1 - 0.5 * p);
-        }
-      },
-      done: () => {
-        for (const { m } of bits) {
-          stage.scene.remove(m);
-          (m.material as THREE.Material).dispose();
-        }
-        geo.dispose();
-      },
-    });
+    if (this.stage) burst3d(this.stage.scene, this.queue, this.time.now, at, { colors: [color, 0xffffff, 0xfacc15, 0xff7ab8, 0x60a5fa] });
   }
 
   /** A ring that spreads out and fades where a token was captured. */
   private pulseRing(at: THREE.Vector3, color: number): void {
-    const stage = this.stage;
-    if (!stage) return;
-    const geo = new THREE.TorusGeometry(0.5, 0.06, 10, 32);
-    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9 });
-    const ring = new THREE.Mesh(geo, mat);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.set(at.x, at.y + 0.08, at.z);
-    stage.scene.add(ring);
-    this.queue.add(this.time.now, {
-      dur: 520,
-      update: (p) => {
-        ring.scale.setScalar(0.5 + 1.9 * p);
-        mat.opacity = 0.9 * (1 - p);
-      },
-      done: () => {
-        stage.scene.remove(ring);
-        geo.dispose();
-        mat.dispose();
-      },
-    });
+    if (this.stage) ringPulse3d(this.stage.scene, this.queue, this.time.now, at, color);
   }
 
   private afterMove(color: number): void {
@@ -558,6 +511,12 @@ export class LudoScene extends Phaser.Scene {
     this.beginTurn();
   }
 
+  /** Win celebration: confetti falling over the 3D board (a 2D burst if there is no 3D view). */
+  private winConfetti(): void {
+    if (this.stage) confettiRain3d(this.stage.scene, this.queue, this.time.now, new THREE.Vector3(0, 0, 0), [0xfacc15, 0xff7ab8, 0x60a5fa, 0x34d399, 0xffffff]);
+    else winBurst(this);
+  }
+
   private finish(color: number): void {
     this.phase = "over";
     this.rollBtn?.container.setVisible(false);
@@ -567,9 +526,10 @@ export class LudoScene extends Phaser.Scene {
     gameAudio.stopMusic();
     gameAudio.coin();
     const human = this.humans[this.seats.indexOf(color)];
-    if (human) this.time.delayedCall(700, () => winBurst(this));
+    // A win: confetti first, then the card (the card's scrim would dim the 3D confetti).
+    if (human) this.winConfetti();
     const title = human ? `${COLOR_NAMES[color]} wins! 🎉` : `${COLOR_NAMES[color]} (computer) wins`;
-    this.time.delayedCall(700, () =>
+    this.time.delayedCall(human ? 1700 : 700, () =>
       showGameOver(this, "All four tokens made it home.", () => this.scene.restart(), () => this.scene.start("Menu"), title)
     );
   }

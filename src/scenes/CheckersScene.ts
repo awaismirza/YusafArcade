@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { winBurst } from "../ui/fx";
+import { burst3d, confettiRain3d } from "../games/shared/burst3d";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -303,7 +304,7 @@ export class CheckersScene extends Phaser.Scene {
     let pz = mover.position.z;
     this.queue.chain(
       this.time.now,
-      route.map((leg) => () => {
+      route.map((leg) => (start: number) => {
         const x0 = px;
         const z0 = pz;
         px = leg.x;
@@ -319,6 +320,12 @@ export class CheckersScene extends Phaser.Scene {
         ];
         if (leg.cap) {
           const cap = leg.cap;
+          // Sparkles where the jumped piece is taken.
+          burst3d(stage.scene, this.queue, start + STEP_MS * 0.6, new THREE.Vector3(cap.position.x, TOP_Y + 0.25, cap.position.z), {
+            count: 10,
+            colors: by === WHITE ? [0x232328, 0xfacc15, 0xffffff] : [0xf3ecdc, 0xfacc15, 0xffffff],
+            speed: 0.8,
+          });
           parts.push({
             dur: STEP_MS,
             update: (p: number) => {
@@ -376,6 +383,12 @@ export class CheckersScene extends Phaser.Scene {
   }
 
   /** winner is the side that just won; null means a draw. */
+  /** Win celebration: confetti falling over the 3D board (a 2D burst if there is no 3D view). */
+  private winConfetti(): void {
+    if (this.stage) confettiRain3d(this.stage.scene, this.queue, this.time.now, new THREE.Vector3(0, 0, 0), [0xfacc15, 0xff7ab8, 0x60a5fa, 0x34d399, 0xffffff]);
+    else winBurst(this);
+  }
+
   private finish(winner: Side | null): void {
     this.dead = true;
     this.busy = true;
@@ -398,8 +411,10 @@ export class CheckersScene extends Phaser.Scene {
       if (this.mode === "two") gameAudio.coin();
     }
     gameAudio.stopMusic();
-    if (winner === WHITE || (winner === BLACK && this.mode === "two")) this.time.delayedCall(450, () => winBurst(this));
-    this.time.delayedCall(450, () => showGameOver(this, detail, () => this.scene.restart(), () => this.scene.start("Menu"), title));
+    // A win: confetti first, then the card (the card's scrim would dim the 3D confetti).
+    const won = winner === WHITE || (winner === BLACK && this.mode === "two");
+    if (won) this.winConfetti();
+    this.time.delayedCall(won ? 1450 : 450, () => showGameOver(this, detail, () => this.scene.restart(), () => this.scene.start("Menu"), title));
   }
 
   private updateHud(): void {

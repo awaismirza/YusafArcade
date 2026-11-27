@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { winBurst } from "../ui/fx";
+import { burst3d, confettiRain3d, ringPulse3d } from "../games/shared/burst3d";
 import * as THREE from "three";
 import { gameAudio } from "../audio/sfx";
 import { setTouchChrome } from "../input/touchChrome";
@@ -237,6 +238,8 @@ export class ChessScene extends Phaser.Scene {
     if (capIndex >= 0) {
       const captured = this.pieces.get(capIndex);
       if (captured) {
+        // Sparkles where the piece is taken.
+        burst3d(stage.scene, this.queue, now, new THREE.Vector3(sqX(capIndex), TOP_Y + 0.4, sqZ(capIndex)), { count: 10, colors: [0xffffff, 0xfacc15, 0xfde68a], speed: 0.8 });
         const start = captured.position.clone();
         this.queue.add(now, {
           dur: CAPTURE_MS,
@@ -279,6 +282,11 @@ export class ChessScene extends Phaser.Scene {
       this.finish(result);
       return;
     }
+    // Check: a red ring pulses three times around the king that is under attack.
+    if (this.stage && inCheck(this.pos, this.pos.turn)) {
+      const k = this.pos.board.findIndex((p) => p && p.t === "k" && p.c === this.pos.turn);
+      if (k >= 0) ringPulse3d(this.stage.scene, this.queue, this.time.now, new THREE.Vector3(sqX(k), TOP_Y, sqZ(k)), 0xdc2626, { radius: 0.6, repeat: 3 });
+    }
     if (this.mode === "two" && this.camCtl) {
       this.flipped = this.pos.turn === "b";
       this.camCtl.flipped = this.flipped;
@@ -296,6 +304,12 @@ export class ChessScene extends Phaser.Scene {
     const move = chooseMove(this.pos, level);
     this.busy = false;
     this.play(move);
+  }
+
+  /** Win celebration: confetti falling over the 3D board (a 2D burst if there is no 3D view). */
+  private winConfetti(): void {
+    if (this.stage) confettiRain3d(this.stage.scene, this.queue, this.time.now, new THREE.Vector3(0, 0, 0), [0xfacc15, 0xff7ab8, 0x60a5fa, 0x34d399, 0xffffff]);
+    else winBurst(this);
   }
 
   private finish(result: ReturnType<typeof outcome>): void {
@@ -332,8 +346,10 @@ export class ChessScene extends Phaser.Scene {
     } else if (result === "insufficient") {
       detail = "Not enough pieces left to checkmate.";
     }
-    if (result === "checkmate" && (this.mode === "two" || this.pos.turn === "b")) this.time.delayedCall(600, () => winBurst(this));
-    this.time.delayedCall(600, () => showGameOver(this, detail, () => this.scene.restart(), () => this.scene.start("Menu"), title));
+    // A win: confetti first, then the card (the card's scrim would dim the 3D confetti).
+    const won = result === "checkmate" && (this.mode === "two" || this.pos.turn === "b");
+    if (won) this.winConfetti();
+    this.time.delayedCall(won ? 1600 : 600, () => showGameOver(this, detail, () => this.scene.restart(), () => this.scene.start("Menu"), title));
   }
 
   private updateHud(): void {
