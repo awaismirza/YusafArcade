@@ -87,7 +87,7 @@ export class SnakesScene extends Phaser.Scene {
       if (this.phase !== "over") this.scene.start("Menu");
     });
 
-    this.stage = ThreeStage.create(this, { key: TEX_KEY, backdrop: ["#065f46", "#022c22"] });
+    this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.85, backdrop: ["#2c4a3f", "#0c1914"], table: { size: 11.4, look: "walnut" } });
     this.hud = new Hud(this);
 
     if (!this.stage) {

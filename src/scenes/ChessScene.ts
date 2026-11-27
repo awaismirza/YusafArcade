@@ -87,7 +87,7 @@ export class ChessScene extends Phaser.Scene {
       if (!this.dead) this.scene.start("Menu");
     });
 
-    this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.85, backdrop: ["#33407a", "#0b0f24"] });
+    this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.8, backdrop: ["#3b2f4f", "#120d18"], table: { size: 9.3, look: "walnut" } });
     this.hud = new Hud(this);
 
     if (!this.stage) {

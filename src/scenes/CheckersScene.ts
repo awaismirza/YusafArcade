@@ -95,7 +95,7 @@ export class CheckersScene extends Phaser.Scene {
       if (!this.dead) this.scene.start("Menu");
     });
 
-    this.stage = ThreeStage.create(this, { key: TEX_KEY, backdrop: ["#14532d", "#052e16"] });
+    this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.85, backdrop: ["#1d3b2e", "#08140e"], table: { size: 9.3, look: "felt" } });
     this.hud = new Hud(this);
 
     if (!this.stage) {

@@ -14,8 +14,13 @@ export type StageOptions = {
   backdrop?: [string, string];
   /** Directional light, with soft shadows. Default true. */
   shadows?: boolean;
-  /** Tone-mapping exposure. Lower it when bright pieces wash out. Default 1.05. */
+  /** Tone-mapping exposure. Lower it when bright pieces wash out. Default 0.95. */
   exposure?: number;
+  /**
+   * Puts the board on a table: the board's width (its base sits at y = -0.5) and the tabletop look.
+   * Adds the tabletop, a soft contact shadow under the board and fog so the table fades into the room.
+   */
+  table?: { size: number; look?: "walnut" | "oak" | "felt" };
 };
 
 /**
@@ -56,19 +61,27 @@ export class ThreeStage {
     this.texture = texture;
 
     this.scene = new THREE.Scene();
-    this.scene.background = makeBackdrop(opts.backdrop ?? ["#1e3a8a", "#0f172a"]);
+    const backdrop = opts.backdrop ?? ["#1e3a8a", "#0f172a"];
+    this.scene.background = makeBackdrop(backdrop);
     this.pmrem = new THREE.PMREMGenerator(renderer);
     this.scene.environment = this.pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environmentIntensity = 0.7;
+    this.scene.environmentIntensity = 0.55;
 
     this.camera = new THREE.PerspectiveCamera(opts.fov ?? 38, STAGE_W / STAGE_H, 0.1, 200);
 
-    this.scene.add(new THREE.HemisphereLight(0xfff7ed, 0x1e293b, 0.6));
-    this.keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
-    this.keyLight.position.set(4, 14, 7);
+    // Warm key light with soft shadows, a cool fill from the other side and a rim light from behind.
+    this.scene.add(new THREE.HemisphereLight(0xfff4e6, 0x3b2a1a, 0.55));
+    this.keyLight = new THREE.DirectionalLight(0xfff0dd, 2.6);
+    this.keyLight.position.set(6, 16, 9);
+    const fill = new THREE.DirectionalLight(0xa9c8ff, 0.55);
+    fill.position.set(-9, 7, -4);
+    const rim = new THREE.DirectionalLight(0xffffff, 0.45);
+    rim.position.set(0, 9, -14);
+    this.scene.add(fill, rim);
     if (opts.shadows !== false) {
       this.keyLight.castShadow = true;
-      this.keyLight.shadow.mapSize.set(1024, 1024);
+      this.keyLight.shadow.mapSize.set(2048, 2048);
+      this.keyLight.shadow.normalBias = 0.02;
       const s = 10;
       this.keyLight.shadow.camera.left = -s;
       this.keyLight.shadow.camera.right = s;
@@ -77,6 +90,7 @@ export class ThreeStage {
       this.keyLight.shadow.bias = -0.0005;
     }
     this.scene.add(this.keyLight);
+    if (opts.table) this.addTable(opts.table.size, opts.table.look ?? "walnut", backdrop[1]);
 
     this.image = phaser.add.image(480, 270, key).setDisplaySize(960, 540).setDepth(1);
   }
@@ -97,7 +111,7 @@ export class ThreeStage {
     renderer.shadowMap.enabled = opts.shadows !== false;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = opts.exposure ?? 1.05;
+    renderer.toneMappingExposure = opts.exposure ?? 0.95;
 
     const flat = document.createElement("canvas");
     flat.width = STAGE_W;
@@ -109,6 +123,67 @@ export class ThreeStage {
     if (!texture) return null;
 
     return new ThreeStage(phaser, opts.key, renderer, canvas, copy, texture, opts);
+  }
+
+  /** A tabletop under the board, a soft contact shadow, and fog so the far edge melts into the room. */
+  private addTable(size: number, look: "walnut" | "oak" | "felt", far: string): void {
+    const c = document.createElement("canvas");
+    c.width = c.height = 512;
+    const g = c.getContext("2d")!;
+    if (look === "felt") {
+      g.fillStyle = "#17573a";
+      g.fillRect(0, 0, 512, 512);
+      for (let i = 0; i < 9000; i++) {
+        g.fillStyle = `rgba(${Math.random() < 0.5 ? "0,0,0" : "255,255,255"},${Math.random() * 0.05})`;
+        g.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+      }
+    } else {
+      const tones = look === "walnut" ? ["#6b4226", "#5c3820", "#744a2b"] : ["#c8925a", "#bb8550", "#d29d64"];
+      for (let i = 0; i < 8; i++) {
+        g.fillStyle = tones[i % 3];
+        g.fillRect(0, i * 64, 512, 64);
+        g.fillStyle = "rgba(20,10,4,0.35)";
+        g.fillRect(0, i * 64, 512, 3);
+        for (let k = 0; k < 14; k++) {
+          g.strokeStyle = `rgba(30,15,5,${0.08 + Math.random() * 0.12})`;
+          g.lineWidth = 1 + Math.random() * 2;
+          g.beginPath();
+          const y = i * 64 + 6 + Math.random() * 52;
+          g.moveTo(0, y);
+          g.bezierCurveTo(150, y + 8 * Math.random(), 350, y - 8 * Math.random(), 512, y + 3);
+          g.stroke();
+        }
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(5, 5);
+    tex.anisotropy = 4;
+    const table = new THREE.Mesh(
+      new THREE.PlaneGeometry(80, 80),
+      new THREE.MeshStandardMaterial({ map: tex, roughness: look === "felt" ? 0.95 : 0.6, metalness: 0 })
+    );
+    table.rotation.x = -Math.PI / 2;
+    table.position.y = -0.505;
+    table.receiveShadow = true;
+    this.scene.add(table);
+    // A soft dark halo right under the board, so it sits on the table instead of floating.
+    const sc = document.createElement("canvas");
+    sc.width = sc.height = 128;
+    const sg = sc.getContext("2d")!;
+    const grad = sg.createRadialGradient(64, 64, 20, 64, 64, 64);
+    grad.addColorStop(0, "rgba(0,0,0,0.55)");
+    grad.addColorStop(0.6, "rgba(0,0,0,0.3)");
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    sg.fillStyle = grad;
+    sg.fillRect(0, 0, 128, 128);
+    const shadowTex = new THREE.CanvasTexture(sc);
+    const contact = new THREE.Mesh(new THREE.PlaneGeometry(size * 1.45, size * 1.45), new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false }));
+    contact.rotation.x = -Math.PI / 2;
+    contact.position.y = -0.5;
+    this.scene.add(contact);
+    this.scene.fog = new THREE.Fog(new THREE.Color(far), size * 1.6, size * 4.5);
   }
 
   /** Draws the scene and hands the frame to Phaser. Call once per Phaser update. */
@@ -157,15 +232,22 @@ export function findUserData<T>(obj: THREE.Object3D | null, key: string): T | un
 
 /** A soft vertical gradient for the 3D background, drawn once. */
 function makeBackdrop([top, bottom]: [string, string]): THREE.CanvasTexture {
+  // A soft vignette: lighter in the upper middle, darker towards the edges.
   const c = document.createElement("canvas");
-  c.width = 4;
-  c.height = 256;
+  c.width = 256;
+  c.height = 144;
   const ctx = c.getContext("2d")!;
-  const g = ctx.createLinearGradient(0, 0, 0, 256);
+  const g = ctx.createLinearGradient(0, 0, 0, 144);
   g.addColorStop(0, top);
   g.addColorStop(1, bottom);
   ctx.fillStyle = g;
-  ctx.fillRect(0, 0, 4, 256);
+  ctx.fillRect(0, 0, 256, 144);
+  const v = ctx.createRadialGradient(128, 50, 20, 128, 72, 170);
+  v.addColorStop(0, "rgba(255,255,255,0.10)");
+  v.addColorStop(0.6, "rgba(0,0,0,0)");
+  v.addColorStop(1, "rgba(0,0,0,0.45)");
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, 256, 144);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   return tex;

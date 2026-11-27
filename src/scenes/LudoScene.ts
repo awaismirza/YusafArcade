@@ -99,7 +99,7 @@ export class LudoScene extends Phaser.Scene {
       if (this.phase !== "over") this.scene.start("Menu");
     });
 
-    this.stage = ThreeStage.create(this, { key: TEX_KEY, backdrop: ["#6d4fd6", "#241a63"] });
+    this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.78, backdrop: ["#4b3a8f", "#171030"], table: { size: 15.9, look: "walnut" } });
     this.hud = new Hud(this);
 
     if (!this.stage) {
