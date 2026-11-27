@@ -25,7 +25,7 @@ Safari on iPadOS uses WebKit for every browser, so test with WebKit or with the 
 
 - **Pointer events only** for game input. Tap and drag must work everywhere. Do not depend on hover, right-click, long-press or double-tap.
 - Keyboard shortcuts are optional extras. Every game must be fully playable by touch.
-- Touch targets are at least **44 × 44 CSS px** on screen.
+- Touch targets are at least **44 × 44 CSS px** on screen. Phaser buttons get an invisible touch area of at least `MIN_HIT` (70 game px, from `src/ui/hitSize.ts`), sized for the smallest phone scale measured (0.63, iPhone landscape). `node scripts/audit-targets.cjs --phone` (and `--ipad`) opens every Phaser game at `?debug=1` and lists anything smaller than 44 px or overlapping; it must print zero.
 - Pinch zoom and page scroll are disabled by the page shell (`index.html`, `touch-action: none`). Scrollable panels opt in with `data-scroll`.
 
 ### 2.3 Display
@@ -108,7 +108,8 @@ Rules for local multiplayer:
 
 ### Shared Soft Glass UI and question data
 
-- `src/ui/palettes.ts` (per-game gradient), `background.ts`, `chips.ts` (HUD pills), `progress.ts`, `tiles.ts`, `roundTile.ts` (rounded tile that behaves like a Phaser Rectangle), `fx.ts` (`confetti`, `popText`, `winBurst`).
+- `src/ui/palettes.ts` (per-game gradient), `background.ts`, `chips.ts` (HUD pills), `progress.ts`, `tiles.ts`, `roundTile.ts` (rounded tile that behaves like a Phaser Rectangle), `fx.ts` (`confetti`, `popText`, `winBurst` for the no-WebGL fallback), `hitSize.ts` (minimum touch area).
+- Question generators live in `src/games/rounds/` (`fractions.ts`, `operator.ts`, `pattern.ts`, `mathWords.ts`, `shapes.ts`, sharing `rng.ts` and `types.ts`) and Robot levels in `src/games/robot/levels.ts`. They are pure (no Phaser) and take a random-number function, so `tests/rounds-*.test.ts` and `tests/robot-levels.test.ts` play hundreds of seeded rounds and check each has exactly one right answer (and every Robot level can be solved within its command limit).
 - Question banks live in `src/data/` (`quizBank.ts`, `quizEasyBank.ts`, `wordBank.ts`, `countries.ts`, `oddPools.ts`). `validate.ts` checks every entry and `pickRounds.ts` picks distinct rounds. `tests/questions.test.ts` enforces validity, no duplicates and minimum sizes; `node scripts/audit-questions.mjs` prints the counts.
 
 ### 3D Arena kit
@@ -127,6 +128,7 @@ The 3D Arena games are full-screen three.js apps (the Solar Explorer pattern), s
 | Module | What it does |
 | --- | --- |
 | `src/ui/threeStage.ts` | Draws a three.js scene into an offscreen canvas and hands each frame to Phaser as a texture, so the Phaser menu, buttons and touch handling keep working. Returns `null` without WebGL. |
+| `src/games/shared/burst3d.ts` | 3D sparkles (`burst3d`), pulsing rings (`ringPulse3d`) and win confetti (`confettiRain3d`) for the board games. Each removes its meshes when done. |
 | `src/ui/animQueue.ts` | Time-based animations and sequences, driven by the scene's `update`. |
 | `src/ui/hud.ts` | Status line, hint line and counter that float over a full-screen board. |
 | `src/games/shared/board8.ts` | The 8×8 wooden board, highlight markers and the camera that turns for pass-and-play. |
@@ -146,9 +148,7 @@ The 3D Arena games are full-screen three.js apps (the Solar Explorer pattern), s
 - Ludo house rules: a token captures every opponent token on a non-safe square it lands on; there is no blocking; the first player to bring all four tokens home wins. With several dice, each die is a separate move: tap a die, then a token.
 - Chess promotes pawns to Queens in play. The rules module supports all four promotion pieces, but the UI does not offer a choice yet.
 - Arcade games keep their own artwork (sky, pipes, rocks, bricks); they share the Soft Glass HUD, buttons and backdrop. Flappy, Dodger, Stack, Whack and Catch were not given new in-play art. Every scene has a gradient backdrop from `src/ui/palettes.ts` (contrast is tested).
-- Capture sparkles and a king-in-check pulse for Chess/Checkers are not built (needs 3D-to-screen projection). Win confetti is a 2D overlay (`winBurst` in `src/ui/fx.ts`).
-- Question generators for Fractions, Operator, Pattern, Math, Shapes and Robot were not extended in this pass; only Quiz, Words, World and Odd One Out banks were.
-- On phones in landscape the 960-wide canvas shrinks buttons to about 37 to 40 px on screen, a little under the 44 px target; a phone-specific scale-up is not done.
+- Board taps count on release (so a camera drag is not a tap) and a press held longer than 900 ms is ignored.
 - Nothing has been run on a physical iPad. Checks so far use a headless browser (Chromium, with a WebGL software renderer, and an iPad Pro 11 device emulation with touch taps). Confirm on a real iPad before calling a game finished.
 
 ## 8. Definition of done for a new game
