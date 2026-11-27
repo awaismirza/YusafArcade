@@ -9,6 +9,7 @@ import { AnimQueue, easeInOut } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { findUserData, ThreeStage } from "../ui/threeStage";
 import { addBoardControls } from "../ui/boardControls";
+import { boardChrome } from "../ui/boardChrome";
 import { OrbitRig } from "../games/shared/orbitRig";
 import { DiceSet } from "../games/shared/dice3d";
 import { buildPawn } from "../games/shared/pawn3d";
@@ -95,9 +96,17 @@ export class LudoScene extends Phaser.Scene {
       this.stage = null;
     });
 
-    this.hideMenu = addMenuButton(this, () => {
+    const goMenu = (): void => {
       if (this.phase !== "over") this.scene.start("Menu");
-    });
+    };
+    const hideCanvasMenu = addMenuButton(this, goMenu);
+    // On iPads the Menu button, turn label and hints sit above and below the board instead of on it.
+    const hideBarMenu = boardChrome.start(this, goMenu);
+    if (hideBarMenu) hideCanvasMenu();
+    this.hideMenu = () => {
+      hideCanvasMenu();
+      hideBarMenu?.();
+    };
 
     this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.78, backdrop: ["#4b3a8f", "#171030"], table: { size: 15.9, look: "walnut" } });
     this.hud = new Hud(this);

@@ -9,6 +9,7 @@ import { AnimQueue, easeInOut } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { ThreeStage } from "../ui/threeStage";
 import { addBoardControls } from "../ui/boardControls";
+import { boardChrome } from "../ui/boardChrome";
 import { OrbitRig } from "../games/shared/orbitRig";
 import { DiceSet } from "../games/shared/dice3d";
 import { buildPawn } from "../games/shared/pawn3d";
@@ -83,9 +84,17 @@ export class SnakesScene extends Phaser.Scene {
       this.stage = null;
     });
 
-    this.hideMenu = addMenuButton(this, () => {
+    const goMenu = (): void => {
       if (this.phase !== "over") this.scene.start("Menu");
-    });
+    };
+    const hideCanvasMenu = addMenuButton(this, goMenu);
+    // On iPads the Menu button, turn label and hints sit above and below the board instead of on it.
+    const hideBarMenu = boardChrome.start(this, goMenu);
+    if (hideBarMenu) hideCanvasMenu();
+    this.hideMenu = () => {
+      hideCanvasMenu();
+      hideBarMenu?.();
+    };
 
     this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.85, backdrop: ["#2c4a3f", "#0c1914"], table: { size: 11.4, look: "walnut" } });
     this.hud = new Hud(this);

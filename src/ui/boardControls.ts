@@ -4,6 +4,7 @@ import type { OrbitRig, ViewPreset } from "../games/shared/orbitRig";
 import { drawGlass } from "./glass";
 import { BoardGestures } from "./gestures";
 import { FONT } from "./theme";
+import { boardChrome } from "./boardChrome";
 
 const DARK = 0x1b1640;
 const PRESETS: { id: ViewPreset; label: string }[] = [
@@ -19,6 +20,10 @@ const PRESETS: { id: ViewPreset; label: string }[] = [
  * camera there. The list closes after a choice or when View is tapped again.
  */
 function addCameraButton(scene: Phaser.Scene, rig: OrbitRig): void {
+  if (boardChrome.isActive()) {
+    boardChrome.setViews(PRESETS, (id) => rig.applyPreset(id as ViewPreset));
+    return;
+  }
   const x = 80;
   const y = 116;
   const bg = scene.add.graphics().setScrollFactor(0).setDepth(50);

@@ -32,6 +32,54 @@
         display: flex;
         flex-direction: column;
       }
+      /* Board games on iPads: labels and buttons sit in the space above and below the board, not on it. */
+      #board-top,
+      #board-bottom {
+        display: none;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px;
+        font-family: Nunito, system-ui, sans-serif;
+        color: #ffffff;
+      }
+      #board-top { height: 64px; padding-top: env(safe-area-inset-top); }
+      #board-bottom { height: 56px; justify-content: center; padding-bottom: env(safe-area-inset-bottom); }
+      body.board-chrome #board-top,
+      body.board-chrome #board-bottom { display: flex; }
+      .bc-btn {
+        flex: 0 0 auto;
+        height: 48px;
+        min-width: 110px;
+        padding: 0 16px;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(27, 22, 64, 0.6);
+        color: #fff;
+        font: 800 18px/1 Nunito, system-ui, sans-serif;
+        touch-action: manipulation;
+      }
+      .bc-chip {
+        padding: 8px 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(27, 22, 64, 0.55);
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .bc-chip:empty { display: none; }
+      #bc-status { font-size: 24px; margin: 0 auto; }
+      #bc-counts { font-size: 17px; }
+      #bc-detail { font-size: 16px; font-weight: 700; white-space: normal; text-align: center; max-width: 92vw; line-height: 1.25; }
+      #bc-views {
+        position: fixed;
+        z-index: 40;
+        display: none;
+        flex-direction: column;
+        gap: 8px;
+      }
+      #bc-views.open { display: flex; }
+      #bc-views button.current { background: #7c3aed; }
       #game {
         flex: 1;
         min-height: 0;
@@ -175,7 +223,15 @@
     </style>
   </head>
   <body>
+    <div id="board-top">
+      <button class="bc-btn" id="bc-menu" type="button">‹ Menu</button>
+      <button class="bc-btn" id="bc-view" type="button">📷 View</button>
+      <div class="bc-chip" id="bc-status"></div>
+      <div class="bc-chip" id="bc-counts"></div>
+    </div>
+    <div id="bc-views"></div>
     <div id="game"></div>
+    <div id="board-bottom"><div class="bc-chip" id="bc-detail"></div></div>
     <div id="touch" aria-label="Touch controls">
       <div class="cluster">
         <button id="btn-jump" type="button">Jump</button>

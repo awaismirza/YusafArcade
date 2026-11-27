@@ -9,6 +9,7 @@ import { AnimQueue, easeInOut, easeOutBack } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { findUserData, ThreeStage } from "../ui/threeStage";
 import { addBoardControls } from "../ui/boardControls";
+import { boardChrome } from "../ui/boardChrome";
 import { BoardCamera, buildBoard8, cellX, cellZ, Markers8, TOP_Y } from "../games/shared/board8";
 import { applyMove, Board, chooseMove, countPieces, crowns, legalMoves, Level, Move, other, Piece, QUIET_LIMIT, Side, startBoard, BLACK, WHITE } from "../games/checkers/rules";
 
@@ -91,9 +92,17 @@ export class CheckersScene extends Phaser.Scene {
       this.stage = null;
     });
 
-    this.hideMenu = addMenuButton(this, () => {
+    const goMenu = (): void => {
       if (!this.dead) this.scene.start("Menu");
-    });
+    };
+    const hideCanvasMenu = addMenuButton(this, goMenu);
+    // On iPads the Menu button, turn label and hints sit above and below the board instead of on it.
+    const hideBarMenu = boardChrome.start(this, goMenu);
+    if (hideBarMenu) hideCanvasMenu();
+    this.hideMenu = () => {
+      hideCanvasMenu();
+      hideBarMenu?.();
+    };
 
     this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.85, backdrop: ["#1d3b2e", "#08140e"], table: { size: 9.3, look: "felt" } });
     this.hud = new Hud(this);

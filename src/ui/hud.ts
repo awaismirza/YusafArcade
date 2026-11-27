@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { drawGlass } from "./glass";
 import { FONT } from "./theme";
+import { boardChrome } from "./boardChrome";
 
 /**
  * Floating status display for full-screen 3D boards: a large status line at the top, a smaller hint at the
@@ -45,6 +46,7 @@ export class Hud {
   }
 
   setVisible(visible: boolean): void {
+    boardChrome.setVisible(visible);
     this.status.setVisible(visible);
     this.detail.setVisible(visible);
     this.counts.setVisible(visible);
@@ -54,6 +56,15 @@ export class Hud {
   private redraw(): void {
     const g = this.pills;
     g.clear();
+    // On iPads the bars above and below the board show these instead, so the board stays clear.
+    const outside = boardChrome.isActive();
+    for (const t of [this.status, this.detail, this.counts]) t.setAlpha(outside ? 0 : 1);
+    if (outside) {
+      boardChrome.setText("status", this.status.text);
+      boardChrome.setText("detail", this.detail.text);
+      boardChrome.setText("counts", this.counts.text);
+      return;
+    }
     const pill = (t: Phaser.GameObjects.Text, padX: number, padY: number): void => {
       if (!t.text) return;
       const w = t.width + padX * 2;

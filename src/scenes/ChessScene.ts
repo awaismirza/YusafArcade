@@ -9,6 +9,7 @@ import { AnimQueue, easeInOut } from "../ui/animQueue";
 import { Hud } from "../ui/hud";
 import { findUserData, ThreeStage } from "../ui/threeStage";
 import { addBoardControls } from "../ui/boardControls";
+import { boardChrome } from "../ui/boardChrome";
 import { BoardCamera, buildBoard8, cellX, cellZ, Markers8, TOP_Y } from "../games/shared/board8";
 import { chooseMove, Level } from "../games/chess/ai";
 import { applyMove, Color, inCheck, legalMoves, Move, outcome, Position, positionKey, squareName, startPosition } from "../games/chess/rules";
@@ -83,9 +84,17 @@ export class ChessScene extends Phaser.Scene {
       this.stage = null;
     });
 
-    this.hideMenu = addMenuButton(this, () => {
+    const goMenu = (): void => {
       if (!this.dead) this.scene.start("Menu");
-    });
+    };
+    const hideCanvasMenu = addMenuButton(this, goMenu);
+    // On iPads the Menu button, turn label and hints sit above and below the board instead of on it.
+    const hideBarMenu = boardChrome.start(this, goMenu);
+    if (hideBarMenu) hideCanvasMenu();
+    this.hideMenu = () => {
+      hideCanvasMenu();
+      hideBarMenu?.();
+    };
 
     this.stage = ThreeStage.create(this, { key: TEX_KEY, exposure: 0.8, backdrop: ["#3b2f4f", "#120d18"], table: { size: 9.3, look: "walnut" } });
     this.hud = new Hud(this);
